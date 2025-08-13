@@ -114,6 +114,22 @@
             text-align: center;
             margin-bottom: 5px;
         }
+        #player-info {
+            transition: all 0.3s ease;
+        }
+        #player-info.active-turn {
+            transform: scale(1.02);
+        }
+        .player-turn-highlight {
+            background-color: var(--p2-glow-color) !important;
+            box-shadow: 0 0 15px var(--p2-glow-color);
+            transform: scale(1.05);
+            transition: all 0.3s ease;
+        }
+        #current-turn-indicator {
+            color: var(--p2-glow-color);
+            text-shadow: 0 0 10px var(--p2-glow-color);
+        }
         /* Modal Styles */
         .modal {
             position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
@@ -148,13 +164,28 @@
             <input type="range" id="size-slider" min="5" max="25" value="8">
             <span id="size-label" class="ml-4 w-16 text-center">8x8</span>
         </div>
+        <input id="player-name" type="text" placeholder="Enter your name" class="mt-2 p-2 rounded bg-[var(--cell-bg)] text-center" maxlength="20" />
         <input id="match-code" type="text" placeholder="Match code (optional)" class="mt-2 p-2 rounded bg-[var(--cell-bg)] text-center" />
     </div>
     <div id="online-count-container">Players Online: <span id="online-count">0</span></div>
     <div id="game-status">Ready to play.</div>
+    <div id="player-info" class="hidden mb-4 text-center">
+        <div class="flex justify-center items-center gap-4 mb-2">
+            <div id="player1-info" class="flex items-center gap-2 p-2 rounded" style="background-color: var(--cell-bg);">
+                <div class="w-4 h-4 rounded-full bg-black" style="box-shadow: 0 0 8px white;"></div>
+                <span id="player1-name">Player 1</span>
+            </div>
+            <div class="text-2xl font-bold">VS</div>
+            <div id="player2-info" class="flex items-center gap-2 p-2 rounded" style="background-color: var(--cell-bg);">
+                <div class="w-4 h-4 rounded-full bg-white" style="box-shadow: 0 0 8px cyan;"></div>
+                <span id="player2-name">Player 2</span>
+            </div>
+        </div>
+        <div id="current-turn-indicator" class="text-lg font-semibold"></div>
+    </div>
     <div class="scoreboard">
-        <div>Player 1: <span id="black-score">0</span></div>
-        <div>Player 2: <span id="white-score">0</span></div>
+        <div><span id="player1-score-label">Player 1</span>: <span id="black-score">0</span></div>
+        <div><span id="player2-score-label">Player 2</span>: <span id="white-score">0</span></div>
     </div>
     <div class="board" id="board"></div>
     <div class="controls">
@@ -205,6 +236,15 @@
         const statusEl = document.getElementById('game-status');
         const onlineCountEl = document.getElementById('online-count');
         const matchCodeInput = document.getElementById('match-code');
+        const playerNameInput = document.getElementById('player-name');
+        const playerInfoEl = document.getElementById('player-info');
+        const player1NameEl = document.getElementById('player1-name');
+        const player2NameEl = document.getElementById('player2-name');
+        const player1InfoEl = document.getElementById('player1-info');
+        const player2InfoEl = document.getElementById('player2-info');
+        const currentTurnIndicatorEl = document.getElementById('current-turn-indicator');
+        const player1ScoreLabelEl = document.getElementById('player1-score-label');
+        const player2ScoreLabelEl = document.getElementById('player2-score-label');
 
         // --- Firebase Setup ---
         const appId = 'qirra-default';
@@ -467,9 +507,8 @@
                 createBoard();
             }
             renderBoard();
-            p1ScoreEl.textContent = localState.p1Score;
-            p2ScoreEl.textContent = localState.p2Score;
-
+            updatePlayerInfo();
+            
             const myTurn = localState.currentPlayerId === auth.currentUser.uid;
             const amIPlayer1 = localState.players[0] === auth.currentUser.uid;
             const myRole = amIPlayer1 ? 'Player 1 (Black)' : 'Player 2 (White)';
@@ -481,6 +520,7 @@
             matchmakingBtn.disabled = false;
             matchmakingBtn.onclick = leaveGame; // Change button function
             sizeSlider.disabled = true;
+            playerNameInput.disabled = true;
         }
 
         function createBoard() {
@@ -693,15 +733,59 @@
             passBtn.disabled = false;
         }
 
-        function renderOfflineGame() {
-            renderBoard();
+        function updatePlayerInfo() {
+            // Show player info panel
+            playerInfoEl.classList.remove('hidden');
+            
+            // Get player names
+            const playerName = playerNameInput.value.trim() || 'You';
+            let player1Name, player2Name;
+            
+            if (localState.isOfflineMode) {
+                player1Name = 'Player 1';
+                player2Name = 'Player 2';
+            } else {
+                const amIPlayer1 = localState.players[0] === auth.currentUser.uid;
+                player1Name = amIPlayer1 ? playerName : 'Opponent';
+                player2Name = amIPlayer1 ? 'Opponent' : playerName;
+            }
+            
+            // Update player names and score labels
+            player1NameEl.textContent = player1Name;
+            player2NameEl.textContent = player2Name;
+            player1ScoreLabelEl.textContent = player1Name;
+            player2ScoreLabelEl.textContent = player2Name;
+            
+            // Update scores
             p1ScoreEl.textContent = localState.p1Score;
             p2ScoreEl.textContent = localState.p2Score;
             
+            // Update turn indicator and highlights
+            const isPlayer1Turn = localState.currentPlayerId === (localState.isOfflineMode ? 'player1' : localState.players[0]);
+            
+            // Remove previous highlights
+            player1InfoEl.classList.remove('player-turn-highlight');
+            player2InfoEl.classList.remove('player-turn-highlight');
+            
+            // Add highlight to current player
+            if (isPlayer1Turn) {
+                player1InfoEl.classList.add('player-turn-highlight');
+                currentTurnIndicatorEl.textContent = `${player1Name}'s turn`;
+            } else {
+                player2InfoEl.classList.add('player-turn-highlight');
+                currentTurnIndicatorEl.textContent = `${player2Name}'s turn`;
+            }
+        }
+
+        function renderOfflineGame() {
+            renderBoard();
+            updatePlayerInfo();
+            
             const currentPlayer = localState.currentPlayerId === 'player1' ? 'Player 1 (Black)' : 'Player 2 (White)';
-            statusEl.textContent = `${currentPlayer}'s turn`;
+            statusEl.textContent = `Game Started - ${currentPlayer}'s turn`;
             
             passBtn.disabled = false;
+            playerNameInput.disabled = true;
         }
 
         function endOfflineGame() {
@@ -724,7 +808,15 @@
             matchmakingBtn.onclick = findMatch;
             offlineBtn.style.display = 'inline-block';
             sizeSlider.disabled = false;
+            playerNameInput.disabled = false;
             statusEl.textContent = "Ready to play.";
+            
+            // Hide player info panel
+            playerInfoEl.classList.add('hidden');
+            
+            // Remove any turn highlights
+            player1InfoEl.classList.remove('player-turn-highlight');
+            player2InfoEl.classList.remove('player-turn-highlight');
             
             // Re-initialize board to default size
             localState.boardSize = parseInt(sizeSlider.value);
@@ -737,6 +829,10 @@
             renderBoard(); // Render the empty board
             p1ScoreEl.textContent = '0';
             p2ScoreEl.textContent = '0';
+            
+            // Reset score labels to default
+            player1ScoreLabelEl.textContent = 'Player 1';
+            player2ScoreLabelEl.textContent = 'Player 2';
         }
 
         // --- Helper Functions (no changes needed) ---

@@ -482,7 +482,10 @@
             matchmakingBtn.disabled = true;
             statusEl.textContent = "Searching for a game...";
 
-            const code = matchCodeInput.value.trim() || generateRandomCode();
+            // Use null for general matchmaking when no code is entered
+            const enteredCode = matchCodeInput.value.trim();
+            const code = enteredCode || null;
+            const isGeneralMatchmaking = !enteredCode;
             const desiredBoardSize = localState.boardSize;
             const myPlayerName = playerNameInput.value.trim() || 'Anonymous';
             
@@ -536,13 +539,14 @@
 
             if (querySnapshot.empty) {
                 // No one is waiting, so we wait
-                statusEl.textContent = "Waiting for an opponent...";
+                statusEl.textContent = isGeneralMatchmaking ? "Waiting for any opponent..." : `Waiting for opponent with code "${enteredCode}"...`;
                 const myWaitingRef = doc(db, `artifacts/${appId}/public/data/waiting_pool`, auth.currentUser.uid);
                 await setDoc(myWaitingRef, { 
                     waitingSince: serverTimestamp(), 
                     boardSize: desiredBoardSize, 
                     code: code,
-                    playerName: myPlayerName
+                    playerName: myPlayerName,
+                    isGeneralMatchmaking: isGeneralMatchmaking
                 });
 
                 // Listen for our waiting doc to be deleted, which means we've been matched
@@ -571,6 +575,9 @@
                 playerNames[players[0]] = players[0] === auth.currentUser.uid ? myPlayerName : opponentName;
                 playerNames[players[1]] = players[1] === auth.currentUser.uid ? myPlayerName : opponentName;
 
+                // For general matchmaking, generate a unique game code for the created game
+                const gameCode = isGeneralMatchmaking ? generateRandomCode() : code;
+
                 const newGameData = {
                     players,
                     playerNames,
@@ -585,7 +592,7 @@
                     previousStates: [],
                     createdAt: serverTimestamp(),
                     gameId: newGameId,
-                    code: code,
+                    code: gameCode,
                     gameStarted: true,
                     gameEnded: false
                 };

@@ -453,9 +453,9 @@
                 };
 
                 await setDoc(doc(db, `artifacts/${appId}/public/data/games`, newGameId), newGameData);
-                // Both players will now get this game via their listeners
+                // Start listening for this specific game
+                listenForGameInvite();
             }
-            listenForGameInvite();
         }
         
         function listenForGameInvite() {

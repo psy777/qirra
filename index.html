@@ -401,6 +401,7 @@
 
             const code = matchCodeInput.value.trim() || 'default'; // Use a default code if none provided
             const desiredBoardSize = localState.boardSize;
+            const myPlayerName = playerNameInput.value.trim() || 'Anonymous';
             const waitingPoolRef = collection(db, `artifacts/${appId}/public/data/waiting_pool`);
             
             // Query for an opponent with the same code and board size
@@ -414,7 +415,8 @@
                 await setDoc(myWaitingRef, { 
                     waitingSince: new Date(), 
                     boardSize: desiredBoardSize, 
-                    code: code 
+                    code: code,
+                    playerName: myPlayerName
                 });
 
                 // Listen for our waiting doc to be deleted, which means we've been matched
@@ -431,6 +433,8 @@
                 // Found a waiting player, let's start a game
                 const opponentDoc = querySnapshot.docs[0];
                 const opponentId = opponentDoc.id;
+                const opponentData = opponentDoc.data();
+                const opponentName = opponentData.playerName || 'Anonymous';
 
                 // Delete opponent from waiting pool
                 await deleteDoc(opponentDoc.ref);
@@ -438,9 +442,20 @@
                 // Create a new game
                 const newGameId = `game_${Math.random().toString(36).substr(2, 9)}`;
                 const players = Math.random() < 0.5 ? [auth.currentUser.uid, opponentId] : [opponentId, auth.currentUser.uid]; // Randomize who goes first
+                
+                // Create player names mapping
+                const playerNames = {};
+                if (players[0] === auth.currentUser.uid) {
+                    playerNames[auth.currentUser.uid] = myPlayerName;
+                    playerNames[opponentId] = opponentName;
+                } else {
+                    playerNames[opponentId] = opponentName;
+                    playerNames[auth.currentUser.uid] = myPlayerName;
+                }
 
                 const newGameData = {
                     players,
+                    playerNames,
                     boardSize: desiredBoardSize,
                     boardData: Array(desiredBoardSize * desiredBoardSize).fill(null),
                     p1Score: 0,
@@ -738,16 +753,23 @@
             playerInfoEl.classList.remove('hidden');
             
             // Get player names
-            const playerName = playerNameInput.value.trim() || 'You';
             let player1Name, player2Name;
             
             if (localState.isOfflineMode) {
                 player1Name = 'Player 1';
                 player2Name = 'Player 2';
             } else {
-                const amIPlayer1 = localState.players[0] === auth.currentUser.uid;
-                player1Name = amIPlayer1 ? playerName : 'Opponent';
-                player2Name = amIPlayer1 ? 'Opponent' : playerName;
+                // Use stored player names from game data
+                if (localState.playerNames && localState.players) {
+                    player1Name = localState.playerNames[localState.players[0]] || 'Player 1';
+                    player2Name = localState.playerNames[localState.players[1]] || 'Player 2';
+                } else {
+                    // Fallback to old behavior if playerNames not available
+                    const playerName = playerNameInput.value.trim() || 'You';
+                    const amIPlayer1 = localState.players[0] === auth.currentUser.uid;
+                    player1Name = amIPlayer1 ? playerName : 'Opponent';
+                    player2Name = amIPlayer1 ? 'Opponent' : playerName;
+                }
             }
             
             // Update player names and score labels

@@ -4,31 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qirra</title>
+    <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for a more sophisticated look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Dongle:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --p1-color: #000000;
-            --p1-glow-color: #ffffff;
-            --p1-glow-size: 10px;
-            --p2-color: #ffffff;
-            --p2-glow-color: #00ffff;
-            --p2-glow-size: 10px;
-            --board-bg: #162447;
-            --cell-bg: #1f4068;
-            --cell-hover-bg: #1b3a5e;
+            --p1-color: #384259;
+            --p2-color: #F73B8A;
+            --board-bg: #1A1A2E;
+            --cell-bg: #272C42;
         }
         body {
-            font-family: 'Dongle', sans-serif;
-            background-color: #1a1a2e;
-            color: #e0e0e0;
-            font-size: 1.75rem;
+            font-family: 'Inter', sans-serif;
+            background-color: #0E0E1A;
+            color: #E2E8F0;
+            font-size: 1rem;
             letter-spacing: 0.5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
         #game-title {
             font-family: 'Cinzel', serif;
+            letter-spacing: 2px;
         }
         .board {
             display: grid;
@@ -36,13 +35,15 @@
             background-color: var(--board-bg);
             padding: 10px;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            pointer-events: none; /* Disabled until a match starts */
-            opacity: 0.5;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            transition: opacity 0.5s;
         }
         .board.active {
-            pointer-events: auto;
             opacity: 1;
+        }
+        .board.inactive {
+            opacity: 0.5;
+            pointer-events: none;
         }
         .cell {
             position: relative;
@@ -50,443 +51,216 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
         }
-        .cell:hover {
-            background-color: var(--cell-hover-bg);
+        .cell:hover:not(.occupied) {
+            background-color: rgba(255, 255, 255, 0.1);
         }
         .stone {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80%;
-            height: 80%;
+            width: 85%;
+            height: 85%;
             border-radius: 50%;
-            transition: border-radius 0.2s ease-in-out, background-color 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            transition: all 0.2s ease-in-out;
         }
-        .black {
-            background-color: var(--p1-color);
-            box-shadow: 0 0 var(--p1-glow-size) var(--p1-glow-color);
+        .p1 {
+            background: radial-gradient(circle at 30% 30%, #4D5773, #384259);
         }
-        .white {
-            background-color: var(--p2-color);
-            box-shadow: 0 0 var(--p2-glow-size) var(--p2-glow-color);
+        .p2 {
+            background: radial-gradient(circle at 30% 30%, #FF6B9E, #F73B8A);
         }
-        .controls-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-        .controls, .slider-control {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 10px;
+        .turn-highlight {
+            box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.5);
         }
         .btn {
-            background-color: var(--cell-bg);
-            color: #e0e0e0;
-            padding: 5px 20px;
-            border-radius: 5px;
+            padding: 12px 24px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s, opacity 0.3s;
-            margin: 0 10px;
-            border: 2px solid transparent;
-            font-size: 1.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease-in-out;
+            background: var(--cell-bg);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
         .btn:hover {
-            background-color: var(--cell-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
         }
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-        }
-        .btn.resign {
-            background-color: #dc2626;
-            border-color: #ef4444;
-        }
-        .btn.resign:hover {
-            background-color: #b91c1c;
+            transform: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
         .scoreboard {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 10px;
-            width: 350px;
+            min-width: 320px;
         }
-        #game-status, #online-count-container {
-            height: 2.5rem;
-            font-size: 1.5rem;
-            text-align: center;
-            margin-bottom: 5px;
-        }
-        #spectator-info {
-            font-size: 1.2rem;
-            color: #fbbf24;
-            text-align: center;
-            margin-bottom: 5px;
-        }
-        #player-info {
-            transition: all 0.3s ease;
-        }
-        #player-info.active-turn {
-            transform: scale(1.02);
-        }
-        .player-turn-highlight {
-            background-color: var(--p2-glow-color) !important;
-            box-shadow: 0 0 15px var(--p2-glow-color);
-            transform: scale(1.05);
-            transition: all 0.3s ease;
-        }
-        #current-turn-indicator {
-            color: var(--p2-glow-color);
-            text-shadow: 0 0 10px var(--p2-glow-color);
+        .score-box {
+            background-color: var(--cell-bg);
+            border-radius: 8px;
+            padding: 10px 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
         /* Modal Styles */
         .modal {
-            position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
-            overflow: auto; background-color: rgba(0,0,0,0.6);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7); z-index: 100;
+            display: flex; justify-content: center; align-items: center;
         }
         .modal-content {
-            background-color: #1a1a2e; margin: 10% auto; padding: 20px;
-            border: 1px solid var(--p2-glow-color); border-radius: 10px;
-            width: 80%; max-width: 500px; box-shadow: 0 0 20px var(--p2-glow-color);
-            position: relative;
+            background-color: #1A1A2E; border-radius: 10px; padding: 20px 40px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.8);
+            border: 2px solid #F73B8A; max-width: 450px; text-align: center;
         }
-        .close-btn {
-            color: #aaa; position: absolute; top: 10px; right: 25px;
-            font-size: 2.5rem; font-weight: bold; cursor: pointer;
-        }
-        .close-btn:hover, .close-btn:focus { color: white; }
-        .settings-grid { display: grid; grid-template-columns: auto 1fr; gap: 15px; align-items: center; }
-        .settings-grid h3 {
-            grid-column: 1 / -1; font-family: 'Cinzel', serif; color: var(--p2-glow-color);
-            border-bottom: 1px solid var(--p2-glow-color); padding-bottom: 5px;
-        }
-        input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; width: 100%; }
-        input[type=range]::-webkit-slider-runnable-track { height: 8px; background: var(--cell-bg); border-radius: 5px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--p2-glow-color); margin-top: -8px; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
-    <h1 id="game-title" class="text-5xl font-medium mb-4">Qirra</h1>
-    <!-- Available Matches Table -->
-    <div id="matches-container" class="mb-4 w-full max-w-4xl">
-        <div class="bg-[var(--cell-bg)] rounded-lg p-4 max-h-64 overflow-y-auto">
-            <h3 class="text-2xl mb-2 text-center">Available Matches</h3>
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="border-b border-gray-600">
-                        <th class="p-2">Match Code</th>
-                        <th class="p-2">Players</th>
-                        <th class="p-2">Board Size</th>
-                        <th class="p-2">Status</th>
-                        <th class="p-2 text-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="matches-table-body">
-                    <tr>
-                        <td colspan="5" class="p-4 text-center text-gray-400">No matches available. Create one to get started!</td>
-                    </tr>
-                </tbody>
-            </table>
+
+    <!-- Game Title -->
+    <h1 id="game-title" class="text-6xl font-bold mb-4 md:mb-8 text-white">Qirra</h1>
+
+    <!-- Player Info and Scoreboard -->
+    <div class="scoreboard flex justify-around items-center w-full max-w-lg mb-4 md:mb-8 space-x-4">
+        <div id="p1-info" class="score-box flex-1 text-center border-l-4 border-[var(--p1-color)]">
+            <div class="text-sm font-bold opacity-70">Player 1 (You)</div>
+            <div id="p1-score" class="text-3xl font-bold text-[var(--p1-color)]">0</div>
         </div>
-    </div>
-    
-    <div id="game-status">Ready to play.</div>
-    <div id="player-info" class="hidden mb-4 text-center">
-        <div class="flex justify-center items-center gap-4 mb-2">
-            <div id="player1-info" class="flex items-center gap-2 p-2 rounded" style="background-color: var(--cell-bg);">
-                <div class="w-4 h-4 rounded-full bg-black" style="box-shadow: 0 0 8px white;"></div>
-                <span id="player1-name">Player 1</span>
-            </div>
-            <div class="text-2xl font-bold">VS</div>
-            <div id="player2-info" class="flex items-center gap-2 p-2 rounded" style="background-color: var(--cell-bg);">
-                <div class="w-4 h-4 rounded-full bg-white" style="box-shadow: 0 0 8px cyan;"></div>
-                <span id="player2-name">Player 2</span>
-            </div>
+        <div id="p2-info" class="score-box flex-1 text-center border-r-4 border-[var(--p2-color)]">
+            <div class="text-sm font-bold opacity-70">Player 2 (Opponent)</div>
+            <div id="p2-score" class="text-3xl font-bold text-[var(--p2-color)]">0</div>
         </div>
-        <div id="current-turn-indicator" class="text-lg font-semibold"></div>
-    </div>
-    <div class="scoreboard">
-        <div><span id="player1-score-label">Player 1</span>: <span id="black-score">0</span></div>
-        <div><span id="player2-score-label">Player 2</span>: <span id="white-score">0</span></div>
-    </div>
-    <div class="board" id="board"></div>
-    <div class="controls">
-        <div class="btn" id="matchmaking-btn">Find Match</div>
-        <div class="btn" id="offline-btn">Play Offline</div>
-        <div class="btn" id="pass-btn" disabled>Pass</div>
-        <div class="btn resign hidden" id="resign-btn">Resign</div>
-        <div class="btn" id="settings-btn">Settings</div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="modal hidden">
+    <!-- Game Status Display -->
+    <div id="game-status" class="text-center font-bold text-lg h-10 mb-4 text-[#F73B8A]">Waiting for a match...</div>
+
+    <!-- Game Board -->
+    <div class="board inactive w-[90vmin] h-[90vmin] max-w-[500px] max-h-[500px]" id="board"></div>
+
+    <!-- Game Controls -->
+    <div class="flex items-center justify-center space-x-4 mt-8">
+        <button class="btn bg-blue-500 hover:bg-blue-600 text-white" id="matchmaking-btn">Find Match</button>
+        <button class="btn text-white disabled:opacity-50 disabled:cursor-not-allowed" id="pass-btn" disabled>Pass Turn</button>
+    </div>
+
+    <!-- Custom Modal for Alerts and Game End -->
+    <div id="game-modal" class="modal hidden">
         <div class="modal-content">
-            <span id="close-modal" class="close-btn">&times;</span>
-            <h2 class="text-3xl mb-4" style="font-family: 'Cinzel', serif;">Settings</h2>
-            <div class="slider-control">
-            <label for="size-slider" class="mr-4">Size:</label>
-            <input type="range" id="size-slider" min="5" max="25" value="8">
-            <span id="size-label" class="ml-4 w-16 text-center">8x8</span>
-            </div>
-            <div class="settings-grid">
-                <h3>Player 1</h3>
-                <label for="p1-color-picker">Tile Color</label> <input type="color" id="p1-color-picker" value="#000000">
-                <label for="p1-glow-color-picker">Glow Color</label> <input type="color" id="p1-glow-color-picker" value="#ffffff">
-                <label for="p1-glow-size-slider">Glow Size</label> <input type="range" id="p1-glow-size-slider" min="0" max="20" value="10">
-                <h3>Player 2</h3>
-                <label for="p2-color-picker">Tile Color</label> <input type="color" id="p2-color-picker" value="#ffffff">
-                <label for="p2-glow-color-picker">Glow Color</label> <input type="color" id="p2-glow-color-picker" value="#00ffff">
-                <label for="p2-glow-size-slider">Glow Size</label> <input type="range" id="p2-glow-size-slider" min="0" max="20" value="10">
-                <h3>Board</h3>
-                <label for="board-bg-picker">Board Color</label> <input type="color" id="board-bg-picker" value="#162447">
-                <label for="cell-bg-picker">Cell Color</label> <input type="color" id="cell-bg-picker" value="#1f4068">
-            </div>
+            <h3 id="modal-title" class="text-2xl font-bold mb-4"></h3>
+            <p id="modal-message" class="mb-6"></p>
+            <button id="modal-close-btn" class="btn bg-[#F73B8A] text-white">OK</button>
         </div>
     </div>
 
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, limit, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getDatabase, ref, onValue, set, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDatabase, ref, onValue, set, onDisconnect } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        // DOM Elements
+        // --- DOM Elements ---
         const boardEl = document.getElementById('board');
-        const p1ScoreEl = document.getElementById('black-score');
-        const p2ScoreEl = document.getElementById('white-score');
+        const p1InfoEl = document.getElementById('p1-info');
+        const p2InfoEl = document.getElementById('p2-info');
+        const p1ScoreEl = document.getElementById('p1-score');
+        const p2ScoreEl = document.getElementById('p2-score');
         const passBtn = document.getElementById('pass-btn');
-        const resignBtn = document.getElementById('resign-btn');
         const matchmakingBtn = document.getElementById('matchmaking-btn');
-        const offlineBtn = document.getElementById('offline-btn');
-        const sizeSlider = document.getElementById('size-slider');
-        const sizeLabel = document.getElementById('size-label');
         const statusEl = document.getElementById('game-status');
-        const onlineCountEl = document.getElementById('online-count');
-        const spectatorInfoEl = document.getElementById('spectator-info');
-        const spectatorCountEl = document.getElementById('spectator-count');
-        const matchCodeInput = document.getElementById('match-code');
-        const playerNameInput = document.getElementById('player-name');
-        const playerInfoEl = document.getElementById('player-info');
-        const player1NameEl = document.getElementById('player1-name');
-        const player2NameEl = document.getElementById('player2-name');
-        const player1InfoEl = document.getElementById('player1-info');
-        const player2InfoEl = document.getElementById('player2-info');
-        const currentTurnIndicatorEl = document.getElementById('current-turn-indicator');
-        const player1ScoreLabelEl = document.getElementById('player1-score-label');
-        const player2ScoreLabelEl = document.getElementById('player2-score-label');
 
         // --- Firebase Setup ---
-        const appId = 'qirra-default';
-        
-        // Firebase configuration - Load from external sources
-        let firebaseConfig = {};
-        
-        // Try to load configuration from multiple sources
-        async function loadFirebaseConfig() {
-            try {
-                // Method 1: Try to import from external config file
-                try {
-                    const configModule = await import('./firebase-config.js');
-                    firebaseConfig = configModule.firebaseConfig;
-                    console.log('Loaded Firebase config from external file');
-                } catch (importError) {
-                    console.log('External config file not found, trying other methods...');
-                }
-                
-                // Method 2: Check for environment variables (if available)
-                if (typeof process !== 'undefined' && process.env) {
-                    const envConfig = {
-                        apiKey: process.env.FIREBASE_API_KEY,
-                        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-                        databaseURL: process.env.FIREBASE_DATABASE_URL,
-                        projectId: process.env.FIREBASE_PROJECT_ID,
-                        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-                        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-                        appId: process.env.FIREBASE_APP_ID
-                    };
-                    
-                    // Only use env config if all required fields are present
-                    if (envConfig.apiKey && envConfig.projectId) {
-                        firebaseConfig = envConfig;
-                        console.log('Loaded Firebase config from environment variables');
-                    }
-                }
-                
-                // Method 3: Check for global window variables (for runtime injection)
-                if (typeof window !== 'undefined' && window.FIREBASE_CONFIG) {
-                    firebaseConfig = window.FIREBASE_CONFIG;
-                    console.log('Loaded Firebase config from window.FIREBASE_CONFIG');
-                }
-                
-                // Method 4: Fallback to inline configuration (development only)
-                if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "your-api-key-here") {
-                    firebaseConfig = {
-                        apiKey: "your-api-key-here",
-                        authDomain: "your-project.firebaseapp.com",
-                        databaseURL: "https://your-project-default-rtdb.firebaseio.com",
-                        projectId: "your-project-id",
-                        storageBucket: "your-project.appspot.com",
-                        messagingSenderId: "123456789",
-                        appId: "1:123456789:web:abcdef123456"
-                    };
-                    console.log('Using fallback Firebase config (development mode)');
-                }
-                
-            } catch (error) {
-                console.error('Error loading Firebase configuration:', error);
-            }
-        }
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        let app, db, rtdb, auth;
 
-        let app, db, rtdb, auth, analytics;
-        matchmakingBtn.disabled = true;
-
-        // --- Game State ---
+        // Game state variables
+        const BOARD_SIZE = 9; // Fixed board size as per user request
         let localState = {
-            boardSize: 8,
             boardData: [],
             p1Score: 0,
             p2Score: 0,
-            currentPlayerId: 'player1', // Start with player1 in offline mode
-            players: ['player1', 'player2'], // Default offline players
-            spectators: [], // List of spectator UIDs
+            currentPlayerId: null,
+            players: [],
             passCount: 0,
             previousStates: [],
-            isOfflineMode: false,
-            gameStarted: false,
-            gameEnded: false,
-            isSpectating: false
         };
         let currentGameId = null;
         let unsubscribeGame = null;
         let unsubscribeWaiting = null;
-        let presenceRef = null;
+        let myPlayerColor = null;
+
+        // Custom Modal
+        const gameModal = document.getElementById('game-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        function showModal(title, message, onClose = null) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            gameModal.classList.remove('hidden');
+            if (onClose) {
+                modalCloseBtn.onclick = () => {
+                    gameModal.classList.add('hidden');
+                    onClose();
+                };
+            } else {
+                modalCloseBtn.onclick = () => gameModal.classList.add('hidden');
+            }
+        }
 
         // --- Core Game Logic ---
         async function initializeAppLogic() {
-            // Load Firebase configuration from external sources
-            await loadFirebaseConfig();
-            
             try {
-                // Check if Firebase config has real values (not placeholder)
-                if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "your-api-key-here") {
-                    throw new Error('Firebase configuration not set up. Please replace placeholder values with your actual Firebase project configuration.');
+                if (Object.keys(firebaseConfig).length === 0) {
+                    throw new Error('Missing Firebase configuration. Check the environment variables.');
                 }
-                
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 rtdb = getDatabase(app);
                 auth = getAuth(app);
-                
-                // Initialize Analytics (optional - only if supported)
-                try {
-                    analytics = getAnalytics(app);
-                    console.log("Firebase Analytics initialized");
-                } catch (analyticsError) {
-                    console.log("Analytics not available:", analyticsError.message);
-                }
 
-                await signInAnonymously(auth);
+                // Use the provided custom auth token if available, otherwise sign in anonymously
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
                 console.log("Authenticated with UID:", auth.currentUser.uid);
-                setupPresence(); // Set up online status
-                loadAvailableMatches(); // Load matches table
+                setupPresence(); // Set up online status tracking
                 matchmakingBtn.disabled = false;
-                statusEl.textContent = "Ready to play online!";
+                statusEl.textContent = "Ready to find a match.";
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
-                statusEl.textContent = "Offline mode only - Firebase not configured.";
-                onlineCountEl.textContent = "N/A";
+                statusEl.textContent = "Offline mode: No matchmaking available.";
+                showModal("Connection Error", "The game could not connect to the database. Please try again later.", () => {});
             }
             setupUI();
         }
 
         function setupPresence() {
-            presenceRef = ref(rtdb, 'status/' + auth.currentUser.uid);
-            onDisconnect(presenceRef).remove();
-            set(presenceRef, { 
-                online: true, 
-                lastSeen: serverTimestamp(),
-                playerName: playerNameInput.value.trim() || 'Anonymous'
-            });
+            if (!auth.currentUser) return;
+            const myStatusRef = ref(rtdb, 'status/' + auth.currentUser.uid);
+            onDisconnect(myStatusRef).remove();
+            set(myStatusRef, true);
 
             const statusRef = ref(rtdb, 'status');
             onValue(statusRef, (snapshot) => {
-                onlineCountEl.textContent = snapshot.numChildren();
+                // The current app doesn't have an online counter, so we can just log it
+                const count = snapshot.numChildren();
+                console.log(`Players Online: ${count}`);
             });
-
-            // Handle page visibility changes and beforeunload
-            window.addEventListener('beforeunload', handlePageUnload);
-        }
-
-        function handlePageUnload() {
-            if (currentGameId && !localState.isOfflineMode) {
-                handlePlayerLeave();
-            }
-        }
-
-        async function handlePlayerLeave() {
-            if (!currentGameId || localState.isOfflineMode) return;
-            
-            try {
-                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                const gameDoc = await getDoc(gameRef);
-                
-                if (gameDoc.exists()) {
-                    const gameData = gameDoc.data();
-                    
-                    if (localState.isSpectating) {
-                        // Remove from spectators
-                        const updatedSpectators = gameData.spectators.filter(id => id !== auth.currentUser.uid);
-                        const updatedSpectatorNames = { ...gameData.spectatorNames };
-                        delete updatedSpectatorNames[auth.currentUser.uid];
-                        await updateDoc(gameRef, { 
-                            spectators: updatedSpectators,
-                            spectatorNames: updatedSpectatorNames 
-                        });
-                    } else if (gameData.players.includes(auth.currentUser.uid)) {
-                        // Player is leaving - end the game and clean up
-                        if (!gameData.gameEnded) {
-                            await updateDoc(gameRef, { 
-                                gameEnded: true,
-                                winner: gameData.players.find(p => p !== auth.currentUser.uid),
-                                endReason: 'resignation',
-                                endedAt: serverTimestamp()
-                            });
-                            
-                            // Clean up the game after a short delay
-                            setTimeout(async () => {
-                                try {
-                                    await deleteDoc(gameRef);
-                                } catch (err) {
-                                    console.error("Error deleting game doc:", err);
-                                }
-                            }, 5000);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error handling player leave:', error);
-            }
         }
 
         function setupUI() {
             createBoard();
             matchmakingBtn.addEventListener('click', findMatch);
-            offlineBtn.addEventListener('click', startOfflineGame);
             passBtn.addEventListener('click', handlePass);
-            resignBtn.addEventListener('click', handleResign);
-            sizeSlider.addEventListener('input', e => sizeLabel.textContent = `${e.target.value}x${e.target.value}`);
-            sizeSlider.addEventListener('change', e => {
-                if (!currentGameId && !localState.gameStarted) { // Only allow size change if not in a game
-                    localState.boardSize = parseInt(e.target.value);
-                    createBoard();
-                }
-            });
         }
 
         async function findMatch() {
@@ -494,408 +268,107 @@
                 statusEl.textContent = "Matchmaking unavailable.";
                 return;
             }
-            
-            if (currentGameId) {
-                // Leave current game
-                await handlePlayerLeave();
-                resetToLobby();
-                return;
-            }
-
             if (unsubscribeWaiting) unsubscribeWaiting();
             matchmakingBtn.disabled = true;
-            statusEl.textContent = "Searching for a game...";
+            statusEl.textContent = "Searching for an opponent...";
 
-            // Use null for general matchmaking when no code is entered
-            const enteredCode = matchCodeInput.value.trim();
-            const code = enteredCode || null;
-            const isGeneralMatchmaking = !enteredCode;
-            const desiredBoardSize = localState.boardSize;
-            const myPlayerName = playerNameInput.value.trim() || 'Anonymous';
-            
-            // First, clean up any ended games with this code
-            const gamesRef = collection(db, `artifacts/${appId}/public/data/games`);
-            const endedGamesQuery = query(gamesRef, where('code', '==', code), where('gameEnded', '==', true));
-            const endedGames = await getDocs(endedGamesQuery);
-            
-            // Delete all ended games with this code
-            for (const doc of endedGames.docs) {
-                await deleteDoc(doc.ref);
-            }
-            
-            // Now check if there's an existing active game with this code
-            const existingGameQuery = query(gamesRef, where('code', '==', code), where('gameEnded', '==', false));
-            const existingGames = await getDocs(existingGameQuery);
-            
-            if (!existingGames.empty) {
-                // Found an existing game
-                const gameDoc = existingGames.docs[0];
-                const gameData = gameDoc.data();
-                
-                if (gameData.players.length < 2 && !gameData.players.includes(auth.currentUser.uid)) {
-                    // Join as second player
-                    const updatedPlayers = [...gameData.players, auth.currentUser.uid];
-                    const updatedPlayerNames = {
-                        ...gameData.playerNames,
-                        [auth.currentUser.uid]: myPlayerName
-                    };
-                    
-                    await updateDoc(gameDoc.ref, {
-                        players: updatedPlayers,
-                        playerNames: updatedPlayerNames,
-                        gameStarted: true
-                    });
-                    
-                    joinGame(gameDoc.id, false);
-                } else if (!gameData.players.includes(auth.currentUser.uid) && !(gameData.spectators && gameData.spectators.includes(auth.currentUser.uid))) {
-                    // Join as spectator
-                    const updatedSpectators = [...(gameData.spectators || []), auth.currentUser.uid];
-                    const updatedSpectatorNames = {
-                        ...(gameData.spectatorNames || {}),
-                        [auth.currentUser.uid]: myPlayerName
-                    };
-                    
-                    await updateDoc(gameDoc.ref, {
-                        spectators: updatedSpectators,
-                        spectatorNames: updatedSpectatorNames
-                    });
-                    
-                    joinGame(gameDoc.id, true);
-                } else {
-                    // Game is full or user is already in it, just join as spectator
-                    joinGame(gameDoc.id, true);
-                }
-                return;
-            }
-            
-            // No existing game, check waiting pool
             const waitingPoolRef = collection(db, `artifacts/${appId}/public/data/waiting_pool`);
-            const q = query(waitingPoolRef, where('code', '==', code), where('boardSize', '==', desiredBoardSize), limit(1));
+            const q = query(waitingPoolRef); // Look for any player, not a specific code
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                // No one is waiting, so we wait
-                statusEl.textContent = isGeneralMatchmaking ? "Waiting for any opponent..." : `Waiting for opponent with code "${enteredCode}"...`;
+                // No one is waiting, so we create a waiting document
                 const myWaitingRef = doc(db, `artifacts/${appId}/public/data/waiting_pool`, auth.currentUser.uid);
-                await setDoc(myWaitingRef, { 
-                    waitingSince: serverTimestamp(), 
-                    boardSize: desiredBoardSize, 
-                    code: code,
-                    playerName: myPlayerName,
-                    isGeneralMatchmaking: isGeneralMatchmaking
-                });
+                await setDoc(myWaitingRef, { waitingSince: new Date(), boardSize: BOARD_SIZE });
 
-                // Listen for our waiting doc to be deleted, which means we've been matched
+                // Listen for our waiting doc to be deleted
                 unsubscribeWaiting = onSnapshot(myWaitingRef, (doc) => {
                     if (!doc.exists()) {
+                        statusEl.textContent = "Opponent found! Starting game...";
                         if(unsubscribeWaiting) unsubscribeWaiting();
-                        listenForGameInvite();
                     }
                 });
-
             } else {
                 // Found a waiting player, let's start a game
                 const opponentDoc = querySnapshot.docs[0];
                 const opponentId = opponentDoc.id;
-                const opponentData = opponentDoc.data();
-                const opponentName = opponentData.playerName || 'Anonymous';
-
-                // Delete opponent from waiting pool
-                await deleteDoc(opponentDoc.ref);
-
-                // Create a new game with unique ID
-                const newGameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                const players = Math.random() < 0.5 ? [auth.currentUser.uid, opponentId] : [opponentId, auth.currentUser.uid];
                 
-                const playerNames = {};
-                playerNames[players[0]] = players[0] === auth.currentUser.uid ? myPlayerName : opponentName;
-                playerNames[players[1]] = players[1] === auth.currentUser.uid ? myPlayerName : opponentName;
+                // Use a transaction to ensure atomicity when deleting and creating a game
+                await runTransaction(db, async (transaction) => {
+                    transaction.delete(opponentDoc.ref);
 
-                // For general matchmaking, generate a unique game code for the created game
-                const gameCode = isGeneralMatchmaking ? generateRandomCode() : code;
+                    const newGameId = `game_${auth.currentUser.uid}_${opponentId}_${Date.now()}`;
+                    const players = [auth.currentUser.uid, opponentId];
+                    const newGameData = {
+                        players,
+                        boardSize: BOARD_SIZE,
+                        boardData: Array(BOARD_SIZE * BOARD_SIZE).fill(null),
+                        p1Score: 0,
+                        p2Score: 0,
+                        currentPlayerId: players[0],
+                        passCount: 0,
+                        previousStates: [],
+                        createdAt: new Date()
+                    };
 
-                const newGameData = {
-                    players,
-                    playerNames,
-                    spectators: [],
-                    spectatorNames: {},
-                    boardSize: desiredBoardSize,
-                    boardData: Array(desiredBoardSize * desiredBoardSize).fill(null),
-                    p1Score: 0,
-                    p2Score: 0,
-                    currentPlayerId: players[0],
-                    passCount: 0,
-                    previousStates: [],
-                    createdAt: serverTimestamp(),
-                    gameId: newGameId,
-                    code: gameCode,
-                    gameStarted: true,
-                    gameEnded: false,
-                    lastActivity: serverTimestamp()
-                };
-
-                await setDoc(doc(db, `artifacts/${appId}/public/data/games`, newGameId), newGameData);
-                listenForGameInvite();
-            }
-        }
-
-        function generateRandomCode() {
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            let result = '';
-            for (let i = 0; i < 6; i++) {
-                result += letters.charAt(Math.floor(Math.random() * letters.length));
-            }
-            return result;
-        }
-
-        // Load and display available matches in the table
-        async function loadAvailableMatches() {
-            if (!db) return;
-
-            try {
-                const gamesRef = collection(db, `artifacts/${appId}/public/data/games`);
-                const activeGamesQuery = query(gamesRef, where('gameEnded', '==', false));
-                
-                onSnapshot(activeGamesQuery, (snapshot) => {
-                    const matches = [];
-                    snapshot.forEach((doc) => {
-                        matches.push({ id: doc.id, ...doc.data() });
-                    });
-                    renderMatchesTable(matches);
+                    const gameRef = doc(db, `artifacts/${appId}/public/data/games`, newGameId);
+                    transaction.set(gameRef, newGameData);
+                    joinGame(newGameId);
                 });
-            } catch (error) {
-                console.error('Error loading matches:', error);
-            }
-        }
-
-        function renderMatchesTable(matches) {
-            const tableBody = document.getElementById('matches-table-body');
-            
-            if (matches.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="p-4 text-center text-gray-400">No matches available. Create one to get started!</td>
-                    </tr>
-                `;
-                return;
-            }
-
-            tableBody.innerHTML = matches.map(match => {
-                const player1Name = match.playerNames && match.players[0] ? match.playerNames[match.players[0]] : 'Player 1';
-                const player2Name = match.playerNames && match.players[1] ? match.playerNames[match.players[1]] : 'Waiting...';
-                const playersText = match.players.length === 1 ? `${player1Name} (waiting)` : `${player1Name} vs ${player2Name}`;
-                const status = match.players.length < 2 ? 'waiting' : 'playing';
-                const actionText = match.players.length < 2 ? 'Join' : 'Watch';
-                
-                return `
-                    <tr class="hover:bg-[var(--cell-hover-bg)] cursor-pointer transition-colors" onclick="joinExistingMatch('${match.id}')">
-                        <td class="p-2 font-mono font-bold">${match.code || 'N/A'}</td>
-                        <td class="p-2">${playersText}</td>
-                        <td class="p-2">${match.boardSize}x${match.boardSize}</td>
-                        <td class="p-2">
-                            <span class="px-2 py-1 rounded text-xs ${status === 'waiting' ? 'bg-yellow-600' : 'bg-green-600'}">${status}</span>
-                        </td>
-                        <td class="p-2 text-center">
-                            <button class="btn text-sm py-1 px-3" onclick="event.stopPropagation(); joinExistingMatch('${match.id}')">${actionText}</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        async function joinExistingMatch(gameId) {
-            if (!auth || !db) {
-                statusEl.textContent = "Cannot join match - not connected.";
-                return;
-            }
-
-            try {
-                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
-                const gameDoc = await getDoc(gameRef);
-                
-                if (!gameDoc.exists()) {
-                    statusEl.textContent = "Match not found.";
-                    return;
-                }
-
-                const gameData = gameDoc.data();
-                const myPlayerName = playerNameInput.value.trim() || 'Anonymous';
-
-                if (gameData.players.includes(auth.currentUser.uid)) {
-                    // Already in this game, just join
-                    joinGame(gameId, false);
-                } else if (gameData.players.length < 2) {
-                    // Join as second player
-                    const updatedPlayers = [...gameData.players, auth.currentUser.uid];
-                    const updatedPlayerNames = {
-                        ...gameData.playerNames,
-                        [auth.currentUser.uid]: myPlayerName
-                    };
-                    
-                    await updateDoc(gameRef, {
-                        players: updatedPlayers,
-                        playerNames: updatedPlayerNames,
-                        gameStarted: true
-                    });
-                    
-                    joinGame(gameId, false);
-                } else {
-                    // Join as spectator
-                    const updatedSpectators = [...(gameData.spectators || []), auth.currentUser.uid];
-                    const updatedSpectatorNames = {
-                        ...(gameData.spectatorNames || {}),
-                        [auth.currentUser.uid]: myPlayerName
-                    };
-                    
-                    await updateDoc(gameRef, {
-                        spectators: updatedSpectators,
-                        spectatorNames: updatedSpectatorNames
-                    });
-                    
-                    joinGame(gameId, true);
-                }
-            } catch (error) {
-                console.error('Error joining match:', error);
-                statusEl.textContent = "Failed to join match.";
             }
         }
         
-        function listenForGameInvite() {
-            if (unsubscribeGame) unsubscribeGame();
-            
-            const gamesRef = collection(db, `artifacts/${appId}/public/data/games`);
-            const playerQuery = query(gamesRef, where('players', 'array-contains', auth.currentUser.uid), where('gameEnded', '==', false));
-            const spectatorQuery = query(gamesRef, where('spectators', 'array-contains', auth.currentUser.uid), where('gameEnded', '==', false));
-
-            // Listen for games where I'm a player
-            unsubscribeGame = onSnapshot(playerQuery, (snapshot) => {
-                if (!snapshot.empty) {
-                    const gameDoc = snapshot.docs[0]; // Join the first active game found
-                    if (gameDoc.id !== currentGameId) {
-                        joinGame(gameDoc.id, false);
-                    } else {
-                        const gameData = gameDoc.data();
-                        if (gameData.gameEnded) {
-                            endGame(getEndGameMessage(gameData));
-                        } else {
-                            updateLocalState(gameData);
-                            renderGame();
-                        }
-                    }
-                }
-            });
-
-            // Also listen for games where I'm a spectator
-            onSnapshot(spectatorQuery, (snapshot) => {
-                if (!snapshot.empty && !currentGameId) {
-                    const gameDoc = snapshot.docs[0];
-                    joinGame(gameDoc.id, true);
-                }
-            });
-        }
-
-        function joinGame(gameId, isSpectating = false) {
-            if (unsubscribeWaiting) unsubscribeWaiting();
-            if (currentGameId === gameId) return; // Already in this game
-
+        function joinGame(gameId) {
             currentGameId = gameId;
-            localState.isSpectating = isSpectating;
-            
-            statusEl.textContent = isSpectating ? "Joined as spectator" : "Game found! Starting...";
-            
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
-            
             if (unsubscribeGame) unsubscribeGame();
-            unsubscribeGame = onSnapshot(gameRef, (doc) => {
-                if (doc.exists()) {
-                    const gameData = doc.data();
-                    if (gameData.gameEnded) {
-                        endGame(getEndGameMessage(gameData));
-                        return;
-                    }
+
+            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
+            unsubscribeGame = onSnapshot(gameRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const gameData = docSnapshot.data();
                     updateLocalState(gameData);
                     renderGame();
                 } else {
-                    endGame("Game was deleted.");
+                    // Game was deleted (e.g., opponent left)
+                    endGame("The opponent left the game.");
                 }
             });
-        }
-
-        function getEndGameMessage(gameData) {
-            if (gameData.endReason === 'resignation') {
-                const winnerName = gameData.playerNames[gameData.winner] || 'Unknown';
-                const loserName = gameData.playerNames[gameData.players.find(p => p !== gameData.winner)] || 'Unknown';
-                return `${loserName} resigned. ${winnerName} wins!`;
-            } else if (gameData.endReason === 'pass') {
-                const winner = gameData.p1Score > gameData.p2Score ? gameData.players[0] : 
-                              gameData.p2Score > gameData.p1Score ? gameData.players[1] : null;
-                if (winner) {
-                    const winnerName = gameData.playerNames[winner] || 'Unknown';
-                    return `Game ended. ${winnerName} wins!`;
-                } else {
-                    return "Game ended. It's a tie!";
-                }
-            }
-            return "Game ended.";
         }
 
         function updateLocalState(gameData) {
             localState = { ...localState, ...gameData };
+            myPlayerColor = localState.players.indexOf(auth.currentUser.uid) === 0 ? 'p1' : 'p2';
         }
 
         function renderGame() {
-            if (localState.boardSize !== parseInt(boardEl.style.gridTemplateColumns.split('(')[1])) {
-                createBoard();
-            }
+            p1ScoreEl.textContent = localState.p1Score;
+            p2ScoreEl.textContent = localState.p2Score;
+
+            const myTurn = localState.currentPlayerId === auth.currentUser.uid;
+            
+            p1InfoEl.classList.toggle('turn-highlight', localState.players[0] === localState.currentPlayerId);
+            p2InfoEl.classList.toggle('turn-highlight', localState.players[1] === localState.currentPlayerId);
+            
+            statusEl.textContent = myTurn ? "It's your turn." : "Opponent's turn...";
+            boardEl.classList.remove('inactive');
+            passBtn.disabled = !myTurn;
+            matchmakingBtn.disabled = true;
+
             renderBoard();
-            updatePlayerInfo();
-            updateSpectatorInfo();
-            
-            if (localState.isSpectating) {
-                statusEl.textContent = "Spectating game";
-                boardEl.classList.add('active'); // Allow spectators to see the board
-                passBtn.disabled = true;
-                resignBtn.classList.add('hidden');
-                matchmakingBtn.textContent = 'Leave Game';
-                matchmakingBtn.disabled = false;
-                matchmakingBtn.onclick = leaveGame;
-            } else {
-                const myTurn = localState.currentPlayerId === auth.currentUser.uid;
-                const amIPlayer1 = localState.players[0] === auth.currentUser.uid;
-                const myRole = amIPlayer1 ? 'Player 1 (Black)' : 'Player 2 (White)';
-
-                statusEl.textContent = myTurn ? `Your turn, ${myRole}` : `Opponent's turn...`;
-                boardEl.classList.add('active');
-                passBtn.disabled = !myTurn;
-                resignBtn.classList.remove('hidden');
-                resignBtn.disabled = false;
-                matchmakingBtn.textContent = 'Leave Game';
-                matchmakingBtn.disabled = false;
-                matchmakingBtn.onclick = leaveGame;
-            }
-            
-            sizeSlider.disabled = true;
-            playerNameInput.disabled = true;
-            matchCodeInput.disabled = true;
-        }
-
-        function updateSpectatorInfo() {
-            if (localState.spectators && localState.spectators.length > 0) {
-                spectatorInfoEl.classList.remove('hidden');
-                spectatorCountEl.textContent = localState.spectators.length;
-            } else {
-                spectatorInfoEl.classList.add('hidden');
-            }
         }
 
         function createBoard() {
             boardEl.innerHTML = '';
-            boardEl.style.gridTemplateColumns = `repeat(${localState.boardSize}, 1fr)`;
-            boardEl.style.gridTemplateRows = `repeat(${localState.boardSize}, 1fr)`;
-            const boardPixelWidth = Math.min(window.innerWidth, window.innerHeight) * 0.7;
-            boardEl.style.width = `${boardPixelWidth}px`;
-            boardEl.style.height = `${boardPixelWidth}px`;
-            for (let i = 0; i < localState.boardSize * localState.boardSize; i++) {
+            boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
+            boardEl.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 1fr)`;
+            const boardSizePx = Math.min(window.innerWidth, window.innerHeight) * 0.8;
+            boardEl.style.width = `${boardSizePx}px`;
+            boardEl.style.height = `${boardSizePx}px`;
+            
+            // Set cell size dynamically based on board size
+            boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
+
+            for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
                 cell.dataset.index = i;
@@ -905,415 +378,136 @@
         }
 
         function renderBoard() {
-            Array.from(boardEl.children).forEach((cell, i) => {
-                // Clear previous stone
-                while (cell.firstChild) {
-                    cell.removeChild(cell.firstChild);
-                }
-                // Add new stone if it exists in state
+            const cells = Array.from(boardEl.children);
+            for (let i = 0; i < localState.boardData.length; i++) {
+                const cell = cells[i];
+                cell.classList.toggle('occupied', localState.boardData[i] !== null);
+                if (cell.firstChild) cell.removeChild(cell.firstChild);
+                
                 if (localState.boardData[i]) {
                     const stone = document.createElement('div');
-                    const playerClass = localState.boardData[i]; // 'black' or 'white'
+                    const playerClass = localState.boardData[i];
                     stone.classList.add('stone', playerClass);
-                    stone.style.borderRadius = getBorderRadiusForStone(i);
                     cell.appendChild(stone);
                 }
-            });
+            }
         }
 
         async function handleCellClick(e) {
-            // Spectators can't make moves
-            if (localState.isSpectating) return;
-            
-            // Check if it's the current player's turn
-            if (localState.isOfflineMode) {
-                // In offline mode, allow any player to play
-            } else {
-                if (localState.currentPlayerId !== auth.currentUser.uid) return; // Not my turn in online mode
-            }
-
+            if (localState.currentPlayerId !== auth.currentUser.uid) return;
             const index = parseInt(e.currentTarget.dataset.index);
-            if (localState.boardData[index]) return; // Cell is not empty
+            if (localState.boardData[index]) return;
 
-            let playerColor;
-            if (localState.isOfflineMode) {
-                playerColor = localState.currentPlayerId === 'player1' ? 'black' : 'white';
-            } else {
-                playerColor = localState.players.indexOf(auth.currentUser.uid) === 0 ? 'black' : 'white';
-            }
+            const playerColor = localState.players.indexOf(auth.currentUser.uid) === 0 ? 'p1' : 'p2';
+            const opponentColor = playerColor === 'p1' ? 'p2' : 'p1';
             
-            // Create a temporary board to test the move
             let tempBoard = [...localState.boardData];
             tempBoard[index] = playerColor;
             
-            const opponentColor = playerColor === 'black' ? 'white' : 'black';
-            let capturedStones = 0;
-            
-            // 1. Check for captures of opponent stones
-            getNeighbors(index, localState.boardSize).forEach(n => {
+            const capturedStones = [];
+            getNeighbors(index, BOARD_SIZE).forEach(n => {
                 if (tempBoard[n] === opponentColor) {
-                    const group = getGroup(n, tempBoard, localState.boardSize);
-                    if (hasNoLiberties(group, tempBoard, localState.boardSize)) {
-                        capturedStones += group.length;
-                        group.forEach(i => tempBoard[i] = null); // Remove captured stones
+                    const group = getGroup(n, tempBoard, BOARD_SIZE);
+                    if (hasNoLiberties(group, tempBoard, BOARD_SIZE)) {
+                        capturedStones.push(...group);
                     }
                 }
             });
 
-            // 2. Check for suicide
-            const ownGroup = getGroup(index, tempBoard, localState.boardSize);
-            if (hasNoLiberties(ownGroup, tempBoard, localState.boardSize)) {
-                statusEl.textContent = "Suicide moves are not allowed.";
-                setTimeout(() => { 
-                    if (localState.isOfflineMode) {
-                        renderOfflineGame();
-                    } else {
-                        renderGame();
-                    }
-                }, 2000);
+            // If we captured something, remove them from the temp board
+            capturedStones.forEach(i => tempBoard[i] = null);
+            
+            // Check for suicide
+            const ownGroup = getGroup(index, tempBoard, BOARD_SIZE);
+            if (hasNoLiberties(ownGroup, tempBoard, BOARD_SIZE)) {
+                showModal("Illegal Move", "This move is a suicide and is not allowed.");
                 return;
             }
 
-            // 3. Check for Ko rule (preventing repeating board state)
-            const stateString = tempBoard.join('');
+            // Check for Ko rule (if the new board state is identical to the previous one)
+            const stateString = JSON.stringify(tempBoard);
             if (localState.previousStates.includes(stateString)) {
-                statusEl.textContent = "Move is not allowed due to the Ko rule.";
-                setTimeout(() => { 
-                    if (localState.isOfflineMode) {
-                        renderOfflineGame();
-                    } else {
-                        renderGame();
-                    }
-                }, 2000);
+                showModal("Illegal Move", "This move is not allowed due to the Ko rule (repeating a previous board state).");
                 return;
             }
 
-            // Update scores
+            // --- Update Firestore with the new state ---
+            const nextPlayerId = localState.players.find(p => p !== auth.currentUser.uid);
+            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+            
             let newP1Score = localState.p1Score;
             let newP2Score = localState.p2Score;
-            if (playerColor === 'black') newP1Score += capturedStones;
-            else newP2Score += capturedStones;
-
-            // Update local state
-            localState.boardData = tempBoard;
-            localState.p1Score = newP1Score;
-            localState.p2Score = newP2Score;
-            localState.passCount = 0; // Reset pass count on a valid move
-            localState.previousStates = [...localState.previousStates.slice(-10), stateString]; // Keep last 10 states
-
-            if (localState.isOfflineMode) {
-                // Switch players in offline mode
-                localState.currentPlayerId = localState.currentPlayerId === 'player1' ? 'player2' : 'player1';
-                renderOfflineGame();
+            if (playerColor === 'p1') {
+                newP1Score += capturedStones.length;
             } else {
-                // Update Firestore for online mode
-                const nextPlayerId = localState.players.find(p => p !== auth.currentUser.uid);
-                localState.currentPlayerId = nextPlayerId;
-                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                
-                await updateDoc(gameRef, {
-                    boardData: tempBoard,
-                    currentPlayerId: nextPlayerId,
-                    passCount: 0,
-                    p1Score: newP1Score,
-                    p2Score: newP2Score,
-                    previousStates: localState.previousStates,
-                    lastActivity: serverTimestamp()
-                });
+                newP2Score += capturedStones.length;
             }
+            
+            await updateDoc(gameRef, {
+                boardData: tempBoard,
+                currentPlayerId: nextPlayerId,
+                passCount: 0,
+                p1Score: newP1Score,
+                p2Score: newP2Score,
+                previousStates: [...localState.previousStates, JSON.stringify(localState.boardData)]
+            });
         }
 
         async function handlePass() {
-            if (localState.isSpectating) return;
-            
-            if (localState.isOfflineMode) {
-                // In offline mode, allow pass
-            } else {
-                if (localState.currentPlayerId !== auth.currentUser.uid) return; // Not my turn in online mode
-            }
+            if (localState.currentPlayerId !== auth.currentUser.uid) return;
             
             const newPassCount = localState.passCount + 1;
-            localState.passCount = newPassCount;
-            
             if (newPassCount >= 2) {
-                // Game ends
-                if (localState.isOfflineMode) {
-                    const winner = localState.p1Score > localState.p2Score ? "Player 1 Wins!" : 
-                                  localState.p2Score > localState.p1Score ? "Player 2 Wins!" : "It's a tie!";
-                    statusEl.textContent = `Game Over. ${winner}`;
-                    passBtn.disabled = true;
-                    resignBtn.disabled = true;
-                } else {
-                    // End online game
-                    const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                    const winner = localState.p1Score > localState.p2Score ? localState.players[0] : 
-                                  localState.p2Score > localState.p1Score ? localState.players[1] : null;
-                    await updateDoc(gameRef, {
-                        gameEnded: true,
-                        winner: winner,
-                        endReason: 'pass',
-                        endedAt: serverTimestamp(),
-                        p1Score: localState.p1Score,
-                        p2Score: localState.p2Score
-                    });
-                }
+                endGame("Both players passed. The game is over.");
             } else {
-                if (localState.isOfflineMode) {
-                    // Switch players in offline mode
-                    localState.currentPlayerId = localState.currentPlayerId === 'player1' ? 'player2' : 'player1';
-                    renderOfflineGame();
-                } else {
-                    // Update Firestore for online mode
-                    const nextPlayerId = localState.players.find(p => p !== auth.currentUser.uid);
-                    localState.currentPlayerId = nextPlayerId;
-                    const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                    await updateDoc(gameRef, {
-                        currentPlayerId: nextPlayerId,
-                        passCount: newPassCount,
-                        lastActivity: serverTimestamp()
-                    });
-                }
-            }
-        }
-
-        async function handleResign() {
-            if (localState.isSpectating) return;
-            
-            if (localState.isOfflineMode) {
-                const winner = localState.currentPlayerId === 'player1' ? 'Player 2' : 'Player 1';
-                statusEl.textContent = `${localState.currentPlayerId === 'player1' ? 'Player 1' : 'Player 2'} resigned. ${winner} wins!`;
-                passBtn.disabled = true;
-                resignBtn.disabled = true;
-                setTimeout(resetToLobby, 3000);
-            } else {
+                const nextPlayerId = localState.players.find(p => p !== auth.currentUser.uid);
                 const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                const winner = localState.players.find(p => p !== auth.currentUser.uid);
                 await updateDoc(gameRef, {
-                    gameEnded: true,
-                    winner: winner,
-                    endReason: 'resignation',
-                    endedAt: serverTimestamp()
+                    currentPlayerId: nextPlayerId,
+                    passCount: newPassCount
                 });
             }
         }
-        
-        async function leaveGame() {
-            await handlePlayerLeave();
-            resetToLobby();
-        }
 
         function endGame(message) {
-            statusEl.textContent = message;
-            
-            // Clean up the game document from Firestore after a delay
-            if (currentGameId && !localState.isOfflineMode) {
-                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                setTimeout(async () => {
-                    try {
-                        // First mark as ended if not already
-                        const gameDoc = await getDoc(gameRef);
-                        if (gameDoc.exists() && !gameDoc.data().gameEnded) {
-                            await updateDoc(gameRef, {
-                                gameEnded: true,
-                                endedAt: serverTimestamp()
-                            });
-                        }
-                        // Then delete the document
-                        await deleteDoc(gameRef);
-                    } catch (err) {
-                        console.error("Error cleaning up game doc:", err);
-                    }
-                }, 5000); // Wait 5 seconds before deleting
-            }
-            
-            setTimeout(() => resetToLobby(), 3000);
-        }
-        
-        function startOfflineGame() {
-            // Reset game state for offline mode
-            localState = {
-                boardSize: parseInt(sizeSlider.value),
-                boardData: Array(parseInt(sizeSlider.value) * parseInt(sizeSlider.value)).fill(null),
-                p1Score: 0,
-                p2Score: 0,
-                currentPlayerId: 'player1',
-                players: ['player1', 'player2'],
-                spectators: [],
-                passCount: 0,
-                previousStates: [],
-                isOfflineMode: true,
-                gameStarted: true,
-                gameEnded: false,
-                isSpectating: false
-            };
-            
-            createBoard();
-            renderOfflineGame();
-            
-            // Update UI for offline game
-            matchmakingBtn.textContent = 'End Game';
-            matchmakingBtn.onclick = endOfflineGame;
-            offlineBtn.style.display = 'none';
-            sizeSlider.disabled = true;
-            playerNameInput.disabled = true;
-            matchCodeInput.disabled = true;
-            statusEl.textContent = "Player 1's turn (Black)";
-            boardEl.classList.add('active');
-            passBtn.disabled = false;
-            resignBtn.classList.remove('hidden');
-            resignBtn.disabled = false;
-        }
-
-        function updatePlayerInfo() {
-            // Show player info panel
-            playerInfoEl.classList.remove('hidden');
-            
-            // Get player names
-            let player1Name, player2Name;
-            
-            if (localState.isOfflineMode) {
-                player1Name = 'Player 1';
-                player2Name = 'Player 2';
+            let winnerMessage = "";
+            if (localState.p1Score > localState.p2Score) {
+                winnerMessage = "Player 1 wins!";
+            } else if (localState.p2Score > localState.p1Score) {
+                winnerMessage = "Player 2 wins!";
             } else {
-                // Use stored player names from game data
-                if (localState.playerNames && localState.players) {
-                    player1Name = localState.playerNames[localState.players[0]] || 'Player 1';
-                    player2Name = localState.playerNames[localState.players[1]] || 'Player 2';
-                } else {
-                    // Fallback to old behavior if playerNames not available
-                    const playerName = playerNameInput.value.trim() || 'You';
-                    const amIPlayer1 = localState.players[0] === auth.currentUser.uid;
-                    player1Name = amIPlayer1 ? playerName : 'Opponent';
-                    player2Name = amIPlayer1 ? 'Opponent' : playerName;
+                winnerMessage = "It's a tie!";
+            }
+            showModal("Game Over", `${message}\nFinal Score: Player 1 - ${localState.p1Score}, Player 2 - ${localState.p2Score}\n${winnerMessage}`, () => {
+                if (unsubscribeGame) unsubscribeGame();
+                if (currentGameId) {
+                    const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+                    // deleteDoc(gameRef); // Optional: delete game after a delay
                 }
-            }
-            
-            // Update player names and score labels
-            player1NameEl.textContent = player1Name;
-            player2NameEl.textContent = player2Name;
-            player1ScoreLabelEl.textContent = player1Name;
-            player2ScoreLabelEl.textContent = player2Name;
-            
-            // Update scores
-            p1ScoreEl.textContent = localState.p1Score;
-            p2ScoreEl.textContent = localState.p2Score;
-            
-            // Update turn indicator and highlights
-            const isPlayer1Turn = localState.currentPlayerId === (localState.isOfflineMode ? 'player1' : localState.players[0]);
-            
-            // Remove previous highlights
-            player1InfoEl.classList.remove('player-turn-highlight');
-            player2InfoEl.classList.remove('player-turn-highlight');
-            
-            // Add highlight to current player
-            if (isPlayer1Turn) {
-                player1InfoEl.classList.add('player-turn-highlight');
-                currentTurnIndicatorEl.textContent = `${player1Name}'s turn`;
-            } else {
-                player2InfoEl.classList.add('player-turn-highlight');
-                currentTurnIndicatorEl.textContent = `${player2Name}'s turn`;
-            }
-        }
-
-        function renderOfflineGame() {
-            renderBoard();
-            updatePlayerInfo();
-            
-            const currentPlayer = localState.currentPlayerId === 'player1' ? 'Player 1 (Black)' : 'Player 2 (White)';
-            statusEl.textContent = `Game Started - ${currentPlayer}'s turn`;
-            
-            passBtn.disabled = false;
-            resignBtn.disabled = false;
-            playerNameInput.disabled = true;
-            matchCodeInput.disabled = true;
-        }
-
-        function endOfflineGame() {
-            resetToLobby();
-        }
-
-        function resetToLobby() {
-            if (unsubscribeGame) unsubscribeGame();
-            unsubscribeGame = null;
-            currentGameId = null;
-            
-            // Reset offline mode state
-            localState.isOfflineMode = false;
-            localState.gameStarted = false;
-            localState.gameEnded = false;
-            localState.isSpectating = false;
-            
-            boardEl.classList.remove('active');
-            passBtn.disabled = true;
-            resignBtn.classList.add('hidden');
-            resignBtn.disabled = true;
-            matchmakingBtn.textContent = 'Find Match';
-            matchmakingBtn.disabled = false;
-            matchmakingBtn.onclick = findMatch;
-            offlineBtn.style.display = 'inline-block';
-            sizeSlider.disabled = false;
-            playerNameInput.disabled = false;
-            matchCodeInput.disabled = false;
-            statusEl.textContent = "Ready to play.";
-            
-            // Hide player info panel and spectator info
-            playerInfoEl.classList.add('hidden');
-            spectatorInfoEl.classList.add('hidden');
-            
-            // Remove any turn highlights
-            player1InfoEl.classList.remove('player-turn-highlight');
-            player2InfoEl.classList.remove('player-turn-highlight');
-            
-            // Re-initialize board to default size
-            localState.boardSize = parseInt(sizeSlider.value);
-            localState.boardData = Array(localState.boardSize * localState.boardSize).fill(null);
-            localState.p1Score = 0;
-            localState.p2Score = 0;
-            localState.passCount = 0;
-            localState.previousStates = [];
-            localState.spectators = [];
-            createBoard();
-            renderBoard(); // Render the empty board
-            p1ScoreEl.textContent = '0';
-            p2ScoreEl.textContent = '0';
-            
-            // Reset score labels to default
-            player1ScoreLabelEl.textContent = 'Player 1';
-            player2ScoreLabelEl.textContent = 'Player 2';
+                currentGameId = null;
+                boardEl.classList.add('inactive');
+                passBtn.disabled = true;
+                matchmakingBtn.disabled = false;
+                statusEl.textContent = "Ready to find a match.";
+            });
         }
 
         // --- Helper Functions ---
-        function getBorderRadiusForStone(index) {
-            const color = localState.boardData[index];
-            if (!color) return '50%';
-            const { boardSize, boardData } = localState;
-            const x = index % boardSize;
-            const y = Math.floor(index / boardSize);
-            const hasTopNeighbor = y > 0 && boardData[index - boardSize] === color;
-            const hasRightNeighbor = x < boardSize - 1 && boardData[index + 1] === color;
-            const hasBottomNeighbor = y < boardSize - 1 && boardData[index + boardSize] === color;
-            const hasLeftNeighbor = x > 0 && boardData[index - 1] === color;
-            const round = '50%', flat = '20%';
-            const topLeft = (hasTopNeighbor || hasLeftNeighbor) ? flat : round;
-            const topRight = (hasTopNeighbor || hasRightNeighbor) ? flat : round;
-            const bottomRight = (hasBottomNeighbor || hasRightNeighbor) ? flat : round;
-            const bottomLeft = (hasBottomNeighbor || hasLeftNeighbor) ? flat : round;
-            return `${topLeft} ${topRight} ${bottomRight} ${bottomLeft}`;
-        }
-        
         function getNeighbors(index, boardSize) {
             const neighbors = [];
-            const x = index % boardSize, y = Math.floor(index / boardSize);
+            const x = index % boardSize;
+            const y = Math.floor(index / boardSize);
             if (x > 0) neighbors.push(index - 1);
             if (x < boardSize - 1) neighbors.push(index + 1);
             if (y > 0) neighbors.push(index - boardSize);
             if (y < boardSize - 1) neighbors.push(index + boardSize);
             return neighbors;
         }
-        
+
         function getGroup(startIndex, boardData, boardSize) {
             if (boardData[startIndex] === null) return [];
-            const group = new Set([startIndex]), queue = [startIndex], color = boardData[startIndex], visited = new Set([startIndex]);
+            const group = new Set(), queue = [startIndex], color = boardData[startIndex], visited = new Set([startIndex]);
+            group.add(startIndex);
             while (queue.length > 0) {
                 const currentIndex = queue.shift();
                 getNeighbors(currentIndex, boardSize).forEach(neighborIndex => {
@@ -1326,94 +520,18 @@
             }
             return Array.from(group);
         }
-        
+
         function hasNoLiberties(group, boardData, boardSize) {
-            if (group.length === 0) return false;
             for (const stoneIndex of group) {
-                if (getNeighbors(stoneIndex, boardSize).some(neighborIndex => boardData[neighborIndex] === null)) return false;
+                if (getNeighbors(stoneIndex, boardSize).some(neighborIndex => boardData[neighborIndex] === null)) {
+                    return false;
+                }
             }
             return true;
         }
-
-        // --- Settings Modal ---
-        const settingsBtn = document.getElementById('settings-btn');
-        const settingsModal = document.getElementById('settings-modal');
-        const closeModalBtn = document.getElementById('close-modal');
-        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-        closeModalBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-        window.addEventListener('click', e => { if (e.target == settingsModal) settingsModal.classList.add('hidden'); });
-        const setCssVar = (name, value) => document.documentElement.style.setProperty(name, value);
-        function darkenColor(hex, percent) {
-            hex = hex.replace(/^#/, '');
-            if (hex.length === 3) hex = hex.split('').map(char => char + char).join('');
-            const num = parseInt(hex, 16), amt = Math.round(2.55 * percent);
-            const R = (num >> 16) - amt, G = (num >> 8 & 0x00FF) - amt, B = (num & 0x0000FF) - amt;
-            return `#${(0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1)}`;
-        }
-        document.getElementById('p1-color-picker').addEventListener('input', e => setCssVar('--p1-color', e.target.value));
-        document.getElementById('p1-glow-color-picker').addEventListener('input', e => setCssVar('--p1-glow-color', e.target.value));
-        document.getElementById('p1-glow-size-slider').addEventListener('input', e => setCssVar('--p1-glow-size', e.target.value + 'px'));
-        document.getElementById('p2-color-picker').addEventListener('input', e => setCssVar('--p2-color', e.target.value));
-        document.getElementById('p2-glow-color-picker').addEventListener('input', e => setCssVar('--p2-glow-color', e.target.value));
-        document.getElementById('p2-glow-size-slider').addEventListener('input', e => setCssVar('--p2-glow-size', e.target.value + 'px'));
-        document.getElementById('board-bg-picker').addEventListener('input', e => setCssVar('--board-bg', e.target.value));
-        document.getElementById('cell-bg-picker').addEventListener('input', e => {
-            const newColor = e.target.value;
-            setCssVar('--cell-bg', newColor);
-            setCssVar('--cell-hover-bg', darkenColor(newColor, 10));
-        });
-        
-        // --- Cleanup old games periodically ---
-        async function cleanupOldGames() {
-            if (!db) return;
-            
-            try {
-                const gamesRef = collection(db, `artifacts/${appId}/public/data/games`);
-                const oldGamesQuery = query(gamesRef, where('gameEnded', '==', true));
-                const oldGames = await getDocs(oldGamesQuery);
-                
-                const now = Date.now();
-                for (const doc of oldGames.docs) {
-                    const gameData = doc.data();
-                    // Delete games that ended more than 1 minute ago
-                    if (gameData.endedAt && gameData.endedAt.toMillis) {
-                        const endedTime = gameData.endedAt.toMillis();
-                        if (now - endedTime > 60000) { // 1 minute
-                            await deleteDoc(doc.ref);
-                        }
-                    }
-                }
-                
-                // Also clean up games that have been inactive for more than 10 minutes
-                const allGamesQuery = query(gamesRef);
-                const allGames = await getDocs(allGamesQuery);
-                
-                for (const doc of allGames.docs) {
-                    const gameData = doc.data();
-                    if (gameData.lastActivity && gameData.lastActivity.toMillis) {
-                        const lastActivityTime = gameData.lastActivity.toMillis();
-                        if (now - lastActivityTime > 600000 && !gameData.gameEnded) { // 10 minutes
-                            await updateDoc(doc.ref, {
-                                gameEnded: true,
-                                endReason: 'timeout',
-                                endedAt: serverTimestamp()
-                            });
-                            // Delete after marking as ended
-                            setTimeout(() => deleteDoc(doc.ref), 5000);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error cleaning up old games:', error);
-            }
-        }
-        
-        // Run cleanup every 30 seconds
-        setInterval(cleanupOldGames, 30000);
         
         // --- App Initialization ---
         initializeAppLogic();
-
     </script>
 </body>
 </html>

@@ -4,229 +4,552 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qirra</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Dongle:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         :root {
-            --p1-color: #000000;
-            --p1-glow-color: #ffffff;
-            --p1-glow-size: 10px;
-            --p2-color: #ffffff;
-            --p2-glow-color: #00ffff;
-            --p2-glow-size: 10px;
-            --board-bg: #162447;
-            --cell-bg: #1f4068;
-            --cell-hover-bg: #1b3a5e;
+            --primary-color: #1976d2;
+            --primary-dark: #1565c0;
+            --primary-light: #42a5f5;
+            --secondary-color: #dc004e;
+            --background: #fafafa;
+            --surface: #ffffff;
+            --surface-variant: #f5f5f5;
+            --on-surface: #1c1b1f;
+            --on-surface-variant: #49454f;
+            --outline: #79747e;
+            --shadow: rgba(0, 0, 0, 0.12);
+            --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+            --elevation-2: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+            --elevation-3: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+            --player1-color: #000000;
+            --player2-color: #ffffff;
+            --board-bg: #8d6e63;
+            --cell-bg: #a1887f;
+            --cell-hover: #bcaaa4;
         }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Dongle', sans-serif;
-            background-color: #1a1a2e;
-            color: #e0e0e0;
-            font-size: 1.75rem;
-            letter-spacing: 0.5px;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background);
+            color: var(--on-surface);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        #game-title {
+
+        .app-bar {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 16px 24px;
+            box-shadow: var(--elevation-2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .app-title {
             font-family: 'Cinzel', serif;
+            font-size: 24px;
+            font-weight: 700;
         }
-        .board {
-            display: grid;
-            gap: 1px;
-            background-color: var(--board-bg);
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            pointer-events: none; /* Disabled until a match starts */
-            opacity: 0.5;
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+            gap: 24px;
+            width: 100%;
         }
-        .board.active {
-            pointer-events: auto;
-            opacity: 1;
+
+        .card {
+            background-color: var(--surface);
+            border-radius: 12px;
+            box-shadow: var(--elevation-1);
+            padding: 24px;
         }
-        .cell {
-            position: relative;
-            background-color: var(--cell-bg);
-            border-radius: 5px;
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: var(--on-surface);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 48px;
         }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            box-shadow: var(--elevation-2);
+        }
+
+        .btn:disabled {
+            background-color: var(--outline);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-outlined {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .btn-outlined:hover {
+            background-color: rgba(25, 118, 210, 0.04);
+        }
+
+        .btn-text {
+            background-color: transparent;
+            color: var(--primary-color);
+            box-shadow: none;
+        }
+
+        .btn-text:hover {
+            background-color: rgba(25, 118, 210, 0.04);
+        }
+
+        .btn-danger {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #b71c1c;
+        }
+
+        .text-field {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid var(--outline);
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            transition: border-color 0.2s ease;
+        }
+
+        .text-field:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            border-width: 2px;
+        }
+
+        .game-board {
+            display: grid;
+            gap: 2px;
+            background-color: var(--board-bg);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: var(--elevation-2);
+            margin: 0 auto;
+            max-width: min(80vw, 80vh);
+            aspect-ratio: 1;
+        }
+
+        .cell {
+            background-color: var(--cell-bg);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .cell:hover {
-            background-color: var(--cell-hover-bg);
+            background-color: var(--cell-hover);
         }
+
         .stone {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             width: 80%;
             height: 80%;
             border-radius: 50%;
-            transition: border-radius 0.2s ease-in-out, background-color 0.3s, box-shadow 0.3s;
+            transition: all 0.2s ease;
+            box-shadow: var(--elevation-1);
         }
-        .black {
-            background-color: var(--p1-color);
-            box-shadow: 0 0 var(--p1-glow-size) var(--p1-glow-color);
+
+        .stone.black {
+            background-color: var(--player1-color);
+            border: 2px solid #333;
         }
-        .white {
-            background-color: var(--p2-color);
-            box-shadow: 0 0 var(--p2-glow-size) var(--p2-glow-color);
+
+        .stone.white {
+            background-color: var(--player2-color);
+            border: 2px solid #ddd;
         }
-        .controls-container {
+
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-radius: 8px;
+            background-color: var(--surface-variant);
+            margin-bottom: 16px;
+        }
+
+        .player-info.active {
+            background-color: var(--primary-light);
+            color: white;
+            box-shadow: var(--elevation-2);
+        }
+
+        .player-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+
+        .player-avatar.black {
+            background-color: var(--player1-color);
+            color: white;
+        }
+
+        .player-avatar.white {
+            background-color: var(--player2-color);
+            color: black;
+            border: 2px solid #ddd;
+        }
+
+        .match-list {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 8px;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
         }
-        .controls, .slider-control {
+
+        .match-item {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            margin-top: 10px;
+            padding: 16px;
+            border: 1px solid var(--outline);
+            border-radius: 8px;
+            background-color: var(--surface);
+            transition: all 0.2s ease;
         }
-        .btn {
-            background-color: var(--cell-bg);
-            color: #e0e0e0;
-            padding: 5px 20px;
-            border-radius: 5px;
+
+        .match-item:hover {
+            background-color: var(--surface-variant);
             cursor: pointer;
-            transition: background-color 0.3s, opacity 0.3s;
-            margin: 0 10px;
-            border: 2px solid transparent;
-            font-size: 1.5rem;
         }
-        .btn:hover {
-            background-color: var(--cell-hover-bg);
-        }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .btn.resign {
-            background-color: #dc2626;
-            border-color: #ef4444;
-        }
-        .btn.resign:hover {
-            background-color: #b91c1c;
-        }
-        .scoreboard {
+
+        .match-info {
             display: flex;
-            justify-content: space-around;
-            margin-bottom: 10px;
-            width: 350px;
+            flex-direction: column;
+            gap: 4px;
         }
-        #game-status, #online-count-container {
-            height: 2.5rem;
-            font-size: 1.5rem;
-            text-align: center;
-            margin-bottom: 5px;
+
+        .match-title {
+            font-weight: 500;
         }
-        #spectator-info {
-            font-size: 1.2rem;
-            color: #fbbf24;
-            text-align: center;
-            margin-bottom: 5px;
+
+        .match-details {
+            font-size: 14px;
+            color: var(--on-surface-variant);
         }
-        #player-info {
-            transition: all 0.3s ease;
+
+        .status-chip {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
         }
-        #player-info.active-turn {
-            transform: scale(1.02);
+
+        .status-waiting {
+            background-color: #fff3e0;
+            color: #e65100;
         }
-        .player-turn-highlight {
-            background-color: var(--p2-glow-color) !important;
-            box-shadow: 0 0 15px var(--p2-glow-color);
-            transform: scale(1.05);
-            transition: all 0.3s ease;
+
+        .status-playing {
+            background-color: #e8f5e8;
+            color: #2e7d32;
         }
-        #current-turn-indicator {
-            color: var(--p2-glow-color);
-            text-shadow: 0 0 10px var(--p2-glow-color);
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
-        /* Modal Styles */
+
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--elevation-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .fab:hover {
+            background-color: var(--primary-dark);
+            transform: scale(1.1);
+        }
+
         .modal {
-            position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
-            overflow: auto; background-color: rgba(0,0,0,0.6);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
         }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .modal-content {
-            background-color: #1a1a2e; margin: 10% auto; padding: 20px;
-            border: 1px solid var(--p2-glow-color); border-radius: 10px;
-            width: 80%; max-width: 500px; box-shadow: 0 0 20px var(--p2-glow-color);
-            position: relative;
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--elevation-3);
         }
-        .close-btn {
-            color: #aaa; position: absolute; top: 10px; right: 25px;
-            font-size: 2.5rem; font-weight: bold; cursor: pointer;
+
+        .form-group {
+            margin-bottom: 16px;
         }
-        .close-btn:hover, .close-btn:focus { color: white; }
-        .settings-grid { display: grid; grid-template-columns: auto 1fr; gap: 15px; align-items: center; }
-        .settings-grid h3 {
-            grid-column: 1 / -1; font-family: 'Cinzel', serif; color: var(--p2-glow-color);
-            border-bottom: 1px solid var(--p2-glow-color); padding-bottom: 5px;
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--on-surface);
         }
-        input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; width: 100%; }
-        input[type=range]::-webkit-slider-runnable-track { height: 8px; background: var(--cell-bg); border-radius: 5px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--p2-glow-color); margin-top: -8px; }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .game-info {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .recent-games {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .recent-game-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--outline);
+            font-size: 14px;
+        }
+
+        .recent-game-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 16px;
+                gap: 16px;
+            }
+
+            .game-container {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .controls {
+                justify-content: stretch;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4">
-    <h1 id="game-title" class="text-5xl font-bold mb-4">Qirra</h1>
-    <div class="controls-container mb-4">
-        <div class="slider-control">
-            <label for="size-slider" class="mr-4">Size:</label>
-            <input type="range" id="size-slider" min="5" max="25" value="8">
-            <span id="size-label" class="ml-4 w-16 text-center">8x8</span>
+<body>
+    <div class="app-bar">
+        <div class="app-title">Qirra</div>
+        <div id="online-status">
+            <span class="material-icons">wifi_off</span>
+            <span id="online-count">Offline</span>
         </div>
-        <input id="player-name" type="text" placeholder="Enter your name" class="mt-2 p-2 rounded bg-[var(--cell-bg)] text-center" maxlength="20" />
-        <input id="match-code" type="text" placeholder="Match code (optional)" class="mt-2 p-2 rounded bg-[var(--cell-bg)] text-center" />
-    </div>
-    <div id="online-count-container">Players Online: <span id="online-count">0</span></div>
-    <div id="spectator-info" class="hidden">Spectators: <span id="spectator-count">0</span></div>
-    <div id="game-status">Ready to play.</div>
-    <div id="player-info" class="hidden mb-4 text-center">
-        <div class="flex justify-center items-center gap-4 mb-2">
-            <div id="player1-info" class="flex items-center gap-2 p-2 rounded" style="background-color: var(--cell-bg);">
-                <div class="w-4 h-4 rounded-full bg-black" style="box-shadow: 0 0 8px white;"></div>
-                <span id="player1-name">Player 1</span>
-            </div>
-            <div class="text-2xl font-bold">VS</div>
-            <div id="player2-info" class="flex items-center gap-2 p-2 rounded" style="background-color: var(--cell-bg);">
-                <div class="w-4 h-4 rounded-full bg-white" style="box-shadow: 0 0 8px cyan;"></div>
-                <span id="player2-name">Player 2</span>
-            </div>
-        </div>
-        <div id="current-turn-indicator" class="text-lg font-semibold"></div>
-    </div>
-    <div class="scoreboard">
-        <div><span id="player1-score-label">Player 1</span>: <span id="black-score">0</span></div>
-        <div><span id="player2-score-label">Player 2</span>: <span id="white-score">0</span></div>
-    </div>
-    <div class="board" id="board"></div>
-    <div class="controls">
-        <div class="btn" id="matchmaking-btn">Find Match</div>
-        <div class="btn" id="offline-btn">Play Offline</div>
-        <div class="btn" id="pass-btn" disabled>Pass</div>
-        <div class="btn resign hidden" id="resign-btn">Resign</div>
-        <div class="btn" id="settings-btn">Settings</div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="modal hidden">
-        <div class="modal-content">
-            <span id="close-modal" class="close-btn">&times;</span>
-            <h2 class="text-3xl mb-4" style="font-family: 'Cinzel', serif;">Settings</h2>
-            <div class="settings-grid">
-                <h3>Player 1</h3>
-                <label for="p1-color-picker">Tile Color</label> <input type="color" id="p1-color-picker" value="#000000">
-                <label for="p1-glow-color-picker">Glow Color</label> <input type="color" id="p1-glow-color-picker" value="#ffffff">
-                <label for="p1-glow-size-slider">Glow Size</label> <input type="range" id="p1-glow-size-slider" min="0" max="20" value="10">
-                <h3>Player 2</h3>
-                <label for="p2-color-picker">Tile Color</label> <input type="color" id="p2-color-picker" value="#ffffff">
-                <label for="p2-glow-color-picker">Glow Color</label> <input type="color" id="p2-glow-color-picker" value="#00ffff">
-                <label for="p2-glow-size-slider">Glow Size</label> <input type="range" id="p2-glow-size-slider" min="0" max="20" value="10">
-                <h3>Board</h3>
-                <label for="board-bg-picker">Board Color</label> <input type="color" id="board-bg-picker" value="#162447">
-                <label for="cell-bg-picker">Cell Color</label> <input type="color" id="cell-bg-picker" value="#1f4068">
+    <div class="main-container">
+        <!-- Lobby View -->
+        <div id="lobby-view">
+            <div class="card">
+                <div class="card-title">Join a Match</div>
+                <div class="form-group">
+                    <label class="form-label" for="player-name">Your Name</label>
+                    <input type="text" id="player-name" class="text-field" placeholder="Enter your name" maxlength="20">
+                </div>
+                <div class="controls">
+                    <button id="find-match-btn" class="btn">
+                        <span class="material-icons">search</span>
+                        Find Match
+                    </button>
+                    <button id="offline-btn" class="btn btn-outlined">
+                        <span class="material-icons">person</span>
+                        Play Offline
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Available Matches</div>
+                <div id="match-list" class="match-list">
+                    <div style="text-align: center; color: var(--on-surface-variant); padding: 24px;">
+                        No matches available. Click "Find Match" to create one!
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Recent Games</div>
+                <div id="recent-games" class="recent-games">
+                    <div style="text-align: center; color: var(--on-surface-variant); padding: 24px;">
+                        No recent games yet.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game View -->
+        <div id="game-view" class="hidden">
+            <div class="game-container">
+                <div class="game-info">
+                    <div class="card">
+                        <div class="card-title">Game Info</div>
+                        <div id="game-status">Waiting for players...</div>
+                        <div id="match-code-display">
+                            <strong>Match Code:</strong> <span id="current-match-code"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div id="player-info" class="hidden">
+                        <div id="player1-info" class="player-info">
+                            <div class="player-card">
+                                <div class="player-avatar black">●</div>
+                                <div>
+                                    <div id="player1-name">Player 1</div>
+                                    <div style="font-size: 14px; color: var(--on-surface-variant);">Black stones</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="player2-info" class="player-info">
+                            <div class="player-card">
+                                <div class="player-avatar white">●</div>
+                                <div>
+                                    <div id="player2-name">Player 2</div>
+                                    <div style="font-size: 14px; color: var(--on-surface-variant);">White stones</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="game-board" class="game-board"></div>
+
+                    <div class="controls">
+                        <button id="pass-btn" class="btn btn-outlined" disabled>
+                            <span class="material-icons">skip_next</span>
+                            Pass
+                        </button>
+                        <button id="resign-btn" class="btn btn-danger hidden" disabled>
+                            <span class="material-icons">flag</span>
+                            Resign
+                        </button>
+                        <button id="leave-game-btn" class="btn btn-text">
+                            <span class="material-icons">exit_to_app</span>
+                            Leave Game
+                        </button>
+                    </div>
+                </div>
+
+                <div class="game-info">
+                    <div class="card">
+                        <div class="card-title">Settings</div>
+                        <div class="form-group">
+                            <label class="form-label" for="board-size">Board Size</label>
+                            <select id="board-size" class="text-field">
+                                <option value="9">9x9</option>
+                                <option value="13">13x13</option>
+                                <option value="19" selected>19x19</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -234,80 +557,31 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, limit, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit, getDocs, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getDatabase, ref, onValue, set, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        // DOM Elements
-        const boardEl = document.getElementById('board');
-        const p1ScoreEl = document.getElementById('black-score');
-        const p2ScoreEl = document.getElementById('white-score');
-        const passBtn = document.getElementById('pass-btn');
-        const resignBtn = document.getElementById('resign-btn');
-        const matchmakingBtn = document.getElementById('matchmaking-btn');
-        const offlineBtn = document.getElementById('offline-btn');
-        const sizeSlider = document.getElementById('size-slider');
-        const sizeLabel = document.getElementById('size-label');
-        const statusEl = document.getElementById('game-status');
-        const onlineCountEl = document.getElementById('online-count');
-        const spectatorInfoEl = document.getElementById('spectator-info');
-        const spectatorCountEl = document.getElementById('spectator-count');
-        const matchCodeInput = document.getElementById('match-code');
-        const playerNameInput = document.getElementById('player-name');
-        const playerInfoEl = document.getElementById('player-info');
-        const player1NameEl = document.getElementById('player1-name');
-        const player2NameEl = document.getElementById('player2-name');
-        const player1InfoEl = document.getElementById('player1-info');
-        const player2InfoEl = document.getElementById('player2-info');
-        const currentTurnIndicatorEl = document.getElementById('current-turn-indicator');
-        const player1ScoreLabelEl = document.getElementById('player1-score-label');
-        const player2ScoreLabelEl = document.getElementById('player2-score-label');
-
-        // --- Firebase Setup ---
+        // App Configuration
         const appId = 'qirra-default';
         
         // Firebase configuration - Load from external sources
         let firebaseConfig = {};
         
-        // Try to load configuration from multiple sources
         async function loadFirebaseConfig() {
             try {
-                // Method 1: Try to import from external config file
                 try {
                     const configModule = await import('./firebase-config.js');
                     firebaseConfig = configModule.firebaseConfig;
                     console.log('Loaded Firebase config from external file');
                 } catch (importError) {
-                    console.log('External config file not found, trying other methods...');
+                    console.log('External config file not found, using fallback...');
                 }
                 
-                // Method 2: Check for environment variables (if available)
-                if (typeof process !== 'undefined' && process.env) {
-                    const envConfig = {
-                        apiKey: process.env.FIREBASE_API_KEY,
-                        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-                        databaseURL: process.env.FIREBASE_DATABASE_URL,
-                        projectId: process.env.FIREBASE_PROJECT_ID,
-                        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-                        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-                        appId: process.env.FIREBASE_APP_ID
-                    };
-                    
-                    // Only use env config if all required fields are present
-                    if (envConfig.apiKey && envConfig.projectId) {
-                        firebaseConfig = envConfig;
-                        console.log('Loaded Firebase config from environment variables');
-                    }
-                }
-                
-                // Method 3: Check for global window variables (for runtime injection)
                 if (typeof window !== 'undefined' && window.FIREBASE_CONFIG) {
                     firebaseConfig = window.FIREBASE_CONFIG;
                     console.log('Loaded Firebase config from window.FIREBASE_CONFIG');
                 }
                 
-                // Method 4: Fallback to inline configuration (development only)
                 if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "your-api-key-here") {
                     firebaseConfig = {
                         apiKey: "your-api-key-here",
@@ -326,39 +600,68 @@
             }
         }
 
-        let app, db, rtdb, auth, analytics;
-        matchmakingBtn.disabled = true;
+        // Global variables
+        let app, db, rtdb, auth;
+        let currentMatchId = null;
+        let currentGameState = null;
+        let isOfflineMode = false;
+        let playerRole = null; // 'player1', 'player2', or 'spectator'
+        let unsubscribeMatch = null;
+        let unsubscribeMatches = null;
+        let unsubscribeWaitingPool = null;
+        let playerTimeouts = new Map();
+        let playerTimeoutInterval = 30000; // 30 seconds
+        let sessionId = null; // Unique session ID for this player
 
-        // --- Game State ---
-        let localState = {
-            boardSize: 8,
-            boardData: [],
-            p1Score: 0,
-            p2Score: 0,
-            currentPlayerId: 'player1', // Start with player1 in offline mode
-            players: ['player1', 'player2'], // Default offline players
-            spectators: [], // List of spectator UIDs
-            passCount: 0,
-            previousStates: [],
-            isOfflineMode: false,
-            gameStarted: false,
-            gameEnded: false,
-            isSpectating: false
-        };
-        let currentGameId = null;
-        let unsubscribeGame = null;
-        let unsubscribeWaiting = null;
-        let presenceRef = null;
+        // DOM Elements
+        const lobbyView = document.getElementById('lobby-view');
+        const gameView = document.getElementById('game-view');
+        const playerNameInput = document.getElementById('player-name');
+        const findMatchBtn = document.getElementById('find-match-btn');
+        const offlineBtn = document.getElementById('offline-btn');
+        const matchList = document.getElementById('match-list');
+        const recentGames = document.getElementById('recent-games');
+        const gameBoard = document.getElementById('game-board');
+        const gameStatus = document.getElementById('game-status');
+        const playerInfo = document.getElementById('player-info');
+        const player1Info = document.getElementById('player1-info');
+        const player2Info = document.getElementById('player2-info');
+        const player1Name = document.getElementById('player1-name');
+        const player2Name = document.getElementById('player2-name');
+        const passBtn = document.getElementById('pass-btn');
+        const resignBtn = document.getElementById('resign-btn');
+        const leaveGameBtn = document.getElementById('leave-game-btn');
+        const boardSizeSelect = document.getElementById('board-size');
+        const onlineStatus = document.getElementById('online-status');
+        const onlineCount = document.getElementById('online-count');
+        const matchCodeDisplay = document.getElementById('match-code-display');
+        const currentMatchCode = document.getElementById('current-match-code');
 
-        // --- Core Game Logic ---
-        async function initializeAppLogic() {
-            // Load Firebase configuration from external sources
+        // Generate unique session ID
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Generate 6-letter match code
+        function generateMatchCode() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            let result = '';
+            for (let i = 0; i < 6; i++) {
+                result += letters.charAt(Math.floor(Math.random() * letters.length));
+            }
+            return result;
+        }
+
+        // Initialize the application
+        async function initApp() {
+            sessionId = generateSessionId();
+            console.log('Session ID:', sessionId);
+            
             await loadFirebaseConfig();
             
             try {
-                // Check if Firebase config has real values (not placeholder)
                 if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "your-api-key-here") {
-                    throw new Error('Firebase configuration not set up. Please replace placeholder values with your actual Firebase project configuration.');
+                    throw new Error('Firebase configuration not set up');
                 }
                 
                 app = initializeApp(firebaseConfig);
@@ -366,918 +669,820 @@
                 rtdb = getDatabase(app);
                 auth = getAuth(app);
                 
-                // Initialize Analytics (optional - only if supported)
-                try {
-                    analytics = getAnalytics(app);
-                    console.log("Firebase Analytics initialized");
-                } catch (analyticsError) {
-                    console.log("Analytics not available:", analyticsError.message);
-                }
-
                 await signInAnonymously(auth);
                 console.log("Authenticated with UID:", auth.currentUser.uid);
-                setupPresence(); // Set up online status
-                matchmakingBtn.disabled = false;
-                statusEl.textContent = "Ready to play online!";
+                
+                setupPresence();
+                setupEventListeners();
+                loadAvailableMatches();
+                loadRecentGames();
+                
+                onlineStatus.innerHTML = '<span class="material-icons">wifi</span>';
+                onlineCount.textContent = 'Online';
+                
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
-                statusEl.textContent = "Offline mode only - Firebase not configured.";
-                onlineCountEl.textContent = "N/A";
+                onlineStatus.innerHTML = '<span class="material-icons">wifi_off</span>';
+                onlineCount.textContent = 'Offline Only';
+                setupEventListeners();
             }
-            setupUI();
         }
 
         function setupPresence() {
-            presenceRef = ref(rtdb, 'status/' + auth.currentUser.uid);
+            const presenceRef = ref(rtdb, 'status/' + auth.currentUser.uid);
             onDisconnect(presenceRef).remove();
-            set(presenceRef, { 
-                online: true, 
-                lastSeen: serverTimestamp(),
-                playerName: playerNameInput.value.trim() || 'Anonymous'
-            });
+            
+            const updatePresence = () => {
+                set(presenceRef, {
+                    online: true,
+                    lastSeen: serverTimestamp(),
+                    playerName: playerNameInput.value.trim() || 'Anonymous',
+                    sessionId: sessionId
+                });
+            };
+            
+            updatePresence();
+            setInterval(updatePresence, playerTimeoutInterval);
 
             const statusRef = ref(rtdb, 'status');
             onValue(statusRef, (snapshot) => {
-                onlineCountEl.textContent = snapshot.numChildren();
+                const count = snapshot.numChildren();
+                onlineCount.textContent = count > 0 ? `${count} online` : 'Online';
             });
 
-            // Handle page visibility changes and beforeunload
             window.addEventListener('beforeunload', handlePageUnload);
         }
 
-        function handlePageUnload() {
-            if (currentGameId && !localState.isOfflineMode) {
-                handlePlayerLeave();
-            }
-        }
-
-        async function handlePlayerLeave() {
-            if (!currentGameId || localState.isOfflineMode) return;
-            
-            try {
-                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                const gameDoc = await getDoc(gameRef);
-                
-                if (gameDoc.exists()) {
-                    const gameData = gameDoc.data();
-                    
-                    if (localState.isSpectating) {
-                        // Remove from spectators
-                        const updatedSpectators = gameData.spectators.filter(id => id !== auth.currentUser.uid);
-                        const updatedSpectatorNames = { ...gameData.spectatorNames };
-                        delete updatedSpectatorNames[auth.currentUser.uid];
-                        await updateDoc(gameRef, { 
-                            spectators: updatedSpectators,
-                            spectatorNames: updatedSpectatorNames 
-                        });
-                    } else if (gameData.players.includes(auth.currentUser.uid)) {
-                        // Player is leaving - end the game and clean up
-                        if (!gameData.gameEnded) {
-                            await updateDoc(gameRef, { 
-                                gameEnded: true,
-                                winner: gameData.players.find(p => p !== auth.currentUser.uid),
-                                endReason: 'resignation',
-                                endedAt: serverTimestamp()
-                            });
-                            
-                            // Clean up the game after a short delay
-                            setTimeout(async () => {
-                                try {
-                                    await deleteDoc(gameRef);
-                                } catch (err) {
-                                    console.error("Error deleting game doc:", err);
-                                }
-                            }, 5000);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error handling player leave:', error);
-            }
-        }
-
-        function setupUI() {
-            createBoard();
-            matchmakingBtn.addEventListener('click', findMatch);
+        function setupEventListeners() {
+            findMatchBtn.addEventListener('click', findMatch);
             offlineBtn.addEventListener('click', startOfflineGame);
             passBtn.addEventListener('click', handlePass);
             resignBtn.addEventListener('click', handleResign);
-            sizeSlider.addEventListener('input', e => sizeLabel.textContent = `${e.target.value}x${e.target.value}`);
-            sizeSlider.addEventListener('change', e => {
-                if (!currentGameId && !localState.gameStarted) { // Only allow size change if not in a game
-                    localState.boardSize = parseInt(e.target.value);
-                    createBoard();
+            leaveGameBtn.addEventListener('click', leaveCurrentMatch);
+
+            // Update presence when name changes
+            playerNameInput.addEventListener('input', () => {
+                if (auth && auth.currentUser) {
+                    const presenceRef = ref(rtdb, 'status/' + auth.currentUser.uid);
+                    set(presenceRef, { 
+                        online: true, 
+                        lastSeen: serverTimestamp(),
+                        playerName: playerNameInput.value.trim() || 'Anonymous',
+                        sessionId: sessionId
+                    });
                 }
             });
         }
 
         async function findMatch() {
+            const playerName = playerNameInput.value.trim() || 'Anonymous';
+            
             if (!auth || !db) {
-                statusEl.textContent = "Matchmaking unavailable.";
-                return;
-            }
-            
-            if (currentGameId) {
-                // Leave current game
-                await handlePlayerLeave();
-                resetToLobby();
+                alert('Online features not available');
                 return;
             }
 
-            if (unsubscribeWaiting) unsubscribeWaiting();
-            matchmakingBtn.disabled = true;
-            statusEl.textContent = "Searching for a game...";
+            try {
+                // Check if there's anyone in the waiting pool
+                const waitingPoolRef = collection(db, `artifacts/${appId}/waiting_pool`);
+                const waitingQuery = query(waitingPoolRef, orderBy('createdAt', 'asc'), limit(1));
+                const waitingSnapshot = await getDocs(waitingQuery);
 
-            // Use null for general matchmaking when no code is entered
-            const enteredCode = matchCodeInput.value.trim();
-            const code = enteredCode || null;
-            const isGeneralMatchmaking = !enteredCode;
-            const desiredBoardSize = localState.boardSize;
-            const myPlayerName = playerNameInput.value.trim() || 'Anonymous';
-            
-            // First, clean up any ended games with this code
-            const gamesRef = collection(db, `artifacts/${appId}/public/data/games`);
-            const endedGamesQuery = query(gamesRef, where('code', '==', code), where('gameEnded', '==', true));
-            const endedGames = await getDocs(endedGamesQuery);
-            
-            // Delete all ended games with this code
-            for (const doc of endedGames.docs) {
-                await deleteDoc(doc.ref);
-            }
-            
-            // Now check if there's an existing active game with this code
-            const existingGameQuery = query(gamesRef, where('code', '==', code), where('gameEnded', '==', false));
-            const existingGames = await getDocs(existingGameQuery);
-            
-            if (!existingGames.empty) {
-                // Found an existing game
-                const gameDoc = existingGames.docs[0];
-                const gameData = gameDoc.data();
-                
-                if (gameData.players.length < 2 && !gameData.players.includes(auth.currentUser.uid)) {
-                    // Join as second player
-                    const updatedPlayers = [...gameData.players, auth.currentUser.uid];
-                    const updatedPlayerNames = {
-                        ...gameData.playerNames,
-                        [auth.currentUser.uid]: myPlayerName
+                if (!waitingSnapshot.empty) {
+                    // Join existing waiting player
+                    const waitingDoc = waitingSnapshot.docs[0];
+                    const waitingData = waitingDoc.data();
+                    
+                    // Create match with both players
+                    const matchCode = waitingData.matchCode;
+                    const boardSize = waitingData.boardSize;
+                    
+                    const matchData = {
+                        matchCode: matchCode,
+                        boardSize: boardSize,
+                        createdAt: serverTimestamp(),
+                        players: [waitingData.playerId, auth.currentUser.uid],
+                        playerNames: {
+                            [waitingData.playerId]: waitingData.playerName,
+                            [auth.currentUser.uid]: playerName
+                        },
+                        playerSessions: {
+                            [waitingData.playerId]: waitingData.sessionId,
+                            [auth.currentUser.uid]: sessionId
+                        },
+                        status: 'playing',
+                        gameState: {
+                            boardData: Array(boardSize * boardSize).fill(null),
+                            currentPlayer: 0, // 0 for player1, 1 for player2
+                            passCount: 0,
+                            gameHistory: []
+                        },
+                        lastActivity: serverTimestamp()
                     };
+
+                    const matchRef = await addDoc(collection(db, `artifacts/${appId}/matches`), matchData);
                     
-                    await updateDoc(gameDoc.ref, {
-                        players: updatedPlayers,
-                        playerNames: updatedPlayerNames,
-                        gameStarted: true
-                    });
+                    // Remove from waiting pool
+                    await deleteDoc(waitingDoc.ref);
                     
-                    joinGame(gameDoc.id, false);
-                } else if (!gameData.players.includes(auth.currentUser.uid) && !(gameData.spectators && gameData.spectators.includes(auth.currentUser.uid))) {
-                    // Join as spectator
-                    const updatedSpectators = [...(gameData.spectators || []), auth.currentUser.uid];
-                    const updatedSpectatorNames = {
-                        ...(gameData.spectatorNames || {}),
-                        [auth.currentUser.uid]: myPlayerName
-                    };
+                    // Join the match
+                    currentMatchId = matchRef.id;
+                    playerRole = 'player2';
+                    startMatchListener(matchRef.id);
+                    showGameView();
                     
-                    await updateDoc(gameDoc.ref, {
-                        spectators: updatedSpectators,
-                        spectatorNames: updatedSpectatorNames
-                    });
-                    
-                    joinGame(gameDoc.id, true);
                 } else {
-                    // Game is full or user is already in it, just join as spectator
-                    joinGame(gameDoc.id, true);
+                    // No one waiting, create new waiting pool entry
+                    const matchCode = generateMatchCode();
+                    const boardSize = parseInt(boardSizeSelect.value);
+                    
+                    const waitingData = {
+                        matchCode: matchCode,
+                        playerId: auth.currentUser.uid,
+                        playerName: playerName,
+                        sessionId: sessionId,
+                        boardSize: boardSize,
+                        createdAt: serverTimestamp()
+                    };
+
+                    await addDoc(waitingPoolRef, waitingData);
+                    
+                    // Show waiting status
+                    currentMatchCode.textContent = matchCode;
+                    gameStatus.textContent = 'Waiting for opponent...';
+                    showGameView();
+                    
+                    // Listen for when someone joins
+                    startWaitingPoolListener();
                 }
-                return;
+
+            } catch (error) {
+                console.error('Error finding match:', error);
+                alert('Failed to find match. Please try again.');
             }
+        }
+
+        function startWaitingPoolListener() {
+            const matchesRef = collection(db, `artifacts/${appId}/matches`);
+            const matchQuery = query(matchesRef, where('players', 'array-contains', auth.currentUser.uid));
             
-            // No existing game, check waiting pool
-            const waitingPoolRef = collection(db, `artifacts/${appId}/public/data/waiting_pool`);
-            const q = query(waitingPoolRef, where('code', '==', code), where('boardSize', '==', desiredBoardSize), limit(1));
-            const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                // No one is waiting, so we wait
-                statusEl.textContent = isGeneralMatchmaking ? "Waiting for any opponent..." : `Waiting for opponent with code "${enteredCode}"...`;
-                const myWaitingRef = doc(db, `artifacts/${appId}/public/data/waiting_pool`, auth.currentUser.uid);
-                await setDoc(myWaitingRef, { 
-                    waitingSince: serverTimestamp(), 
-                    boardSize: desiredBoardSize, 
-                    code: code,
-                    playerName: myPlayerName,
-                    isGeneralMatchmaking: isGeneralMatchmaking
-                });
-
-                // Listen for our waiting doc to be deleted, which means we've been matched
-                unsubscribeWaiting = onSnapshot(myWaitingRef, (doc) => {
-                    if (!doc.exists()) {
-                        if(unsubscribeWaiting) unsubscribeWaiting();
-                        listenForGameInvite();
+            unsubscribeMatches = onSnapshot(matchQuery, (snapshot) => {
+                snapshot.forEach((doc) => {
+                    const matchData = doc.data();
+                    if (matchData.players.length === 2) {
+                        // Match found!
+                        currentMatchId = doc.id;
+                        playerRole = 'player1';
+                        currentGameState = matchData;
+                        
+                        // Stop listening to waiting pool
+                        if (unsubscribeMatches) unsubscribeMatches();
+                        
+                        // Start listening to match updates
+                        startMatchListener(doc.id);
+                        updateGameView(matchData);
                     }
                 });
+            });
+        }
 
-            } else {
-                // Found a waiting player, let's start a game
-                const opponentDoc = querySnapshot.docs[0];
-                const opponentId = opponentDoc.id;
-                const opponentData = opponentDoc.data();
-                const opponentName = opponentData.playerName || 'Anonymous';
+        async function loadAvailableMatches() {
+            if (!db) return;
 
-                // Delete opponent from waiting pool
-                await deleteDoc(opponentDoc.ref);
+            if (unsubscribeMatches) unsubscribeMatches();
 
-                // Create a new game with unique ID
-                const newGameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                const players = Math.random() < 0.5 ? [auth.currentUser.uid, opponentId] : [opponentId, auth.currentUser.uid];
+            const matchesRef = collection(db, `artifacts/${appId}/matches`);
+            const q = query(
+                matchesRef, 
+                where('status', 'in', ['waiting', 'playing']),
+                orderBy('createdAt', 'desc'),
+                limit(20)
+            );
+
+            unsubscribeMatches = onSnapshot(q, (snapshot) => {
+                const matches = [];
+                snapshot.forEach((doc) => {
+                    matches.push({ id: doc.id, ...doc.data() });
+                });
+                renderMatchList(matches);
+            });
+        }
+
+        function renderMatchList(matches) {
+            if (matches.length === 0) {
+                matchList.innerHTML = `
+                    <div style="text-align: center; color: var(--on-surface-variant); padding: 24px;">
+                        No matches available. Click "Find Match" to create one!
+                    </div>
+                `;
+                return;
+            }
+
+            matchList.innerHTML = matches.map(match => `
+                <div class="match-item" onclick="spectateMatch('${match.id}')">
+                    <div class="match-info">
+                        <div class="match-title">Match ${match.matchCode}</div>
+                        <div class="match-details">
+                            ${match.boardSize}x${match.boardSize} • 
+                            ${match.players.length}/2 players • 
+                            ${match.playerNames[match.players[0]] || 'Player 1'} vs ${match.playerNames[match.players[1]] || 'Player 2'}
+                        </div>
+                    </div>
+                    <div class="status-chip status-${match.status}">
+                        ${match.status}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function spectateMatch(matchId) {
+            if (unsubscribeMatch) unsubscribeMatch();
+            if (!auth || !db) {
+                alert('Online features not available');
+                return;
+            }
+
+            try {
+                const matchRef = doc(db, `artifacts/${appId}/matches`, matchId);
+                const matchDoc = await getDoc(matchRef);
                 
-                const playerNames = {};
-                playerNames[players[0]] = players[0] === auth.currentUser.uid ? myPlayerName : opponentName;
-                playerNames[players[1]] = players[1] === auth.currentUser.uid ? myPlayerName : opponentName;
+                if (!matchDoc.exists()) {
+                    alert('Match not found');
+                    return;
+                }
 
-                // For general matchmaking, generate a unique game code for the created game
-                const gameCode = isGeneralMatchmaking ? generateRandomCode() : code;
+                const matchData = matchDoc.data();
+                currentMatchId = matchId;
+                playerRole = 'spectator';
+                
+                // Start listening to match updates
+                startMatchListener(matchId);
+                showGameView();
 
-                const newGameData = {
-                    players,
-                    playerNames,
-                    spectators: [],
-                    spectatorNames: {},
-                    boardSize: desiredBoardSize,
-                    boardData: Array(desiredBoardSize * desiredBoardSize).fill(null),
-                    p1Score: 0,
-                    p2Score: 0,
-                    currentPlayerId: players[0],
-                    passCount: 0,
-                    previousStates: [],
-                    createdAt: serverTimestamp(),
-                    gameId: newGameId,
-                    code: gameCode,
-                    gameStarted: true,
-                    gameEnded: false,
-                    lastActivity: serverTimestamp()
+            } catch (error) {
+                console.error('Error spectating match:', error);
+                alert('Failed to spectate match. Please try again.');
+            }
+        }
+
+        function startMatchListener(matchId) {
+            if (unsubscribeMatch) unsubscribeMatch();
+
+            const matchRef = doc(db, `artifacts/${appId}/matches`, matchId);
+            unsubscribeMatch = onSnapshot(matchRef, (doc) => {
+                if (doc.exists()) {
+                    const matchData = doc.data();
+                    currentGameState = matchData;
+                    updateGameView(matchData);
+                    
+                    // Handle player timeouts
+                    handlePlayerTimeouts(matchData);
+                } else {
+                    // Match was deleted
+                    alert('Match has ended');
+                    returnToLobby();
+                }
+            });
+        }
+
+        function handlePlayerTimeouts(matchData) {
+            // Clear existing timeouts
+            playerTimeouts.forEach(timeout => clearTimeout(timeout));
+            playerTimeouts.clear();
+
+            // Check for inactive players (30 second timeout)
+            const now = Date.now();
+            matchData.players.forEach((playerId, index) => {
+                if (matchData.lastActivity && matchData.lastActivity.toMillis) {
+                    const lastActivity = matchData.lastActivity.toMillis();
+                    const timeSinceActivity = now - lastActivity;
+                    
+                    if (timeSinceActivity > 30000 && matchData.status === 'playing') {
+                        // Player has been inactive for more than 30 seconds
+                        const timeout = setTimeout(() => {
+                            endMatchDueToTimeout(playerId);
+                        }, 1000);
+                        playerTimeouts.set(playerId, timeout);
+                    }
+                }
+            });
+        }
+
+        async function endMatchDueToTimeout(inactivePlayerId) {
+            if (!currentMatchId || !currentGameState) return;
+
+            try {
+                const matchRef = doc(db, `artifacts/${appId}/matches`, currentMatchId);
+                const activePlayer = currentGameState.players.find(p => p !== inactivePlayerId);
+                
+                // Move to recent games
+                await moveToRecentGames(currentGameState, activePlayer, 'timeout');
+                
+                // Delete the match
+                await deleteDoc(matchRef);
+                
+                alert('Match ended due to player inactivity');
+                returnToLobby();
+                
+            } catch (error) {
+                console.error('Error ending match due to timeout:', error);
+            }
+        }
+
+        async function moveToRecentGames(matchData, winnerId, endReason) {
+            if (!db) return;
+
+            try {
+                const recentGameData = {
+                    matchCode: matchData.matchCode,
+                    boardSize: matchData.boardSize,
+                    winner: matchData.playerNames[winnerId] || 'Unknown',
+                    loser: matchData.playerNames[matchData.players.find(p => p !== winnerId)] || 'Unknown',
+                    endReason: endReason,
+                    endedAt: serverTimestamp()
                 };
 
-                await setDoc(doc(db, `artifacts/${appId}/public/data/games`, newGameId), newGameData);
-                listenForGameInvite();
-            }
-        }
-
-        function generateRandomCode() {
-            return Math.random().toString(36).substr(2, 6).toUpperCase();
-        }
-        
-        function listenForGameInvite() {
-            if (unsubscribeGame) unsubscribeGame();
-            
-            const gamesRef = collection(db, `artifacts/${appId}/public/data/games`);
-            const playerQuery = query(gamesRef, where('players', 'array-contains', auth.currentUser.uid), where('gameEnded', '==', false));
-            const spectatorQuery = query(gamesRef, where('spectators', 'array-contains', auth.currentUser.uid), where('gameEnded', '==', false));
-
-            // Listen for games where I'm a player
-            unsubscribeGame = onSnapshot(playerQuery, (snapshot) => {
-                if (!snapshot.empty) {
-                    const gameDoc = snapshot.docs[0]; // Join the first active game found
-                    if (gameDoc.id !== currentGameId) {
-                        joinGame(gameDoc.id, false);
-                    } else {
-                        const gameData = gameDoc.data();
-                        if (gameData.gameEnded) {
-                            endGame(getEndGameMessage(gameData));
-                        } else {
-                            updateLocalState(gameData);
-                            renderGame();
-                        }
+                await addDoc(collection(db, `artifacts/${appId}/recent_games`), recentGameData);
+                
+                // Clean up old recent games (keep only last 50)
+                const recentGamesRef = collection(db, `artifacts/${appId}/recent_games`);
+                const oldGamesQuery = query(recentGamesRef, orderBy('endedAt', 'desc'), limit(100));
+                const oldGames = await getDocs(oldGamesQuery);
+                
+                if (oldGames.docs.length > 50) {
+                    const gamesToDelete = oldGames.docs.slice(50);
+                    for (const gameDoc of gamesToDelete) {
+                        await deleteDoc(gameDoc.ref);
                     }
                 }
-            });
-
-            // Also listen for games where I'm a spectator
-            onSnapshot(spectatorQuery, (snapshot) => {
-                if (!snapshot.empty && !currentGameId) {
-                    const gameDoc = snapshot.docs[0];
-                    joinGame(gameDoc.id, true);
-                }
-            });
-        }
-
-        function joinGame(gameId, isSpectating = false) {
-            if (unsubscribeWaiting) unsubscribeWaiting();
-            if (currentGameId === gameId) return; // Already in this game
-
-            currentGameId = gameId;
-            localState.isSpectating = isSpectating;
-            
-            statusEl.textContent = isSpectating ? "Joined as spectator" : "Game found! Starting...";
-            
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
-            
-            if (unsubscribeGame) unsubscribeGame();
-            unsubscribeGame = onSnapshot(gameRef, (doc) => {
-                if (doc.exists()) {
-                    const gameData = doc.data();
-                    if (gameData.gameEnded) {
-                        endGame(getEndGameMessage(gameData));
-                        return;
-                    }
-                    updateLocalState(gameData);
-                    renderGame();
-                } else {
-                    endGame("Game was deleted.");
-                }
-            });
-        }
-
-        function getEndGameMessage(gameData) {
-            if (gameData.endReason === 'resignation') {
-                const winnerName = gameData.playerNames[gameData.winner] || 'Unknown';
-                const loserName = gameData.playerNames[gameData.players.find(p => p !== gameData.winner)] || 'Unknown';
-                return `${loserName} resigned. ${winnerName} wins!`;
-            } else if (gameData.endReason === 'pass') {
-                const winner = gameData.p1Score > gameData.p2Score ? gameData.players[0] : 
-                              gameData.p2Score > gameData.p1Score ? gameData.players[1] : null;
-                if (winner) {
-                    const winnerName = gameData.playerNames[winner] || 'Unknown';
-                    return `Game ended. ${winnerName} wins!`;
-                } else {
-                    return "Game ended. It's a tie!";
-                }
+                
+            } catch (error) {
+                console.error('Error moving game to recent games:', error);
             }
-            return "Game ended.";
         }
 
-        function updateLocalState(gameData) {
-            localState = { ...localState, ...gameData };
-        }
+        async function loadRecentGames() {
+            if (!db) return;
 
-        function renderGame() {
-            if (localState.boardSize !== parseInt(boardEl.style.gridTemplateColumns.split('(')[1])) {
-                createBoard();
+            try {
+                const recentGamesRef = collection(db, `artifacts/${appId}/recent_games`);
+                const q = query(recentGamesRef, orderBy('endedAt', 'desc'), limit(10));
+                const snapshot = await getDocs(q);
+                
+                const games = [];
+                snapshot.forEach((doc) => {
+                    games.push(doc.data());
+                });
+                
+                renderRecentGames(games);
+            } catch (error) {
+                console.error('Error loading recent games:', error);
             }
-            renderBoard();
-            updatePlayerInfo();
-            updateSpectatorInfo();
+        }
+
+        function renderRecentGames(games) {
+            if (games.length === 0) {
+                recentGames.innerHTML = `
+                    <div style="text-align: center; color: var(--on-surface-variant); padding: 24px;">
+                        No recent games yet.
+                    </div>
+                `;
+                return;
+            }
+
+            recentGames.innerHTML = games.map(game => `
+                <div class="recent-game-item">
+                    <div><strong>${game.winner || 'Draw'}</strong> vs ${game.loser || 'Unknown'}</div>
+                    <div style="color: var(--on-surface-variant); font-size: 12px;">
+                        Match ${game.matchCode} • ${game.boardSize}x${game.boardSize} • ${formatDate(game.endedAt)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'Unknown';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        function showGameView() {
+            lobbyView.classList.add('hidden');
+            gameView.classList.remove('hidden');
+        }
+
+        function returnToLobby() {
+            gameView.classList.add('hidden');
+            lobbyView.classList.remove('hidden');
             
-            if (localState.isSpectating) {
-                statusEl.textContent = "Spectating game";
-                boardEl.classList.add('active'); // Allow spectators to see the board
+            // Clean up
+            if (unsubscribeMatch) unsubscribeMatch();
+            if (unsubscribeMatches) unsubscribeMatches();
+            currentMatchId = null;
+            currentGameState = null;
+            playerRole = null;
+            isOfflineMode = false;
+            
+            // Clear timeouts
+            playerTimeouts.forEach(timeout => clearTimeout(timeout));
+            playerTimeouts.clear();
+            
+            // Reload match list
+            loadAvailableMatches();
+            loadRecentGames();
+        }
+
+        function updateGameView(matchData) {
+            // Show match code
+            currentMatchCode.textContent = matchData.matchCode;
+            
+            // Update game status
+            if (matchData.status === 'waiting') {
+                gameStatus.textContent = 'Waiting for second player...';
+                playerInfo.classList.add('hidden');
                 passBtn.disabled = true;
                 resignBtn.classList.add('hidden');
-                matchmakingBtn.textContent = 'Leave Game';
-                matchmakingBtn.disabled = false;
-                matchmakingBtn.onclick = leaveGame;
-            } else {
-                const myTurn = localState.currentPlayerId === auth.currentUser.uid;
-                const amIPlayer1 = localState.players[0] === auth.currentUser.uid;
-                const myRole = amIPlayer1 ? 'Player 1 (Black)' : 'Player 2 (White)';
-
-                statusEl.textContent = myTurn ? `Your turn, ${myRole}` : `Opponent's turn...`;
-                boardEl.classList.add('active');
-                passBtn.disabled = !myTurn;
-                resignBtn.classList.remove('hidden');
-                resignBtn.disabled = false;
-                matchmakingBtn.textContent = 'Leave Game';
-                matchmakingBtn.disabled = false;
-                matchmakingBtn.onclick = leaveGame;
+            } else if (matchData.status === 'playing') {
+                const currentPlayerName = matchData.playerNames[matchData.players[matchData.gameState.currentPlayer]];
+                gameStatus.textContent = `${currentPlayerName}'s turn`;
+                playerInfo.classList.remove('hidden');
+                
+                // Enable/disable controls based on role and turn
+                if (playerRole === 'spectator') {
+                    passBtn.disabled = true;
+                    resignBtn.classList.add('hidden');
+                } else {
+                    const isMyTurn = matchData.players[matchData.gameState.currentPlayer] === auth.currentUser.uid;
+                    passBtn.disabled = !isMyTurn;
+                    resignBtn.classList.remove('hidden');
+                    resignBtn.disabled = false;
+                }
             }
+
+            // Update player info
+            if (matchData.players.length >= 2) {
+                player1Name.textContent = matchData.playerNames[matchData.players[0]] || 'Player 1';
+                player2Name.textContent = matchData.playerNames[matchData.players[1]] || 'Player 2';
+                
+                // Highlight current player
+                player1Info.classList.remove('active');
+                player2Info.classList.remove('active');
+                
+                if (matchData.gameState.currentPlayer === 0) {
+                    player1Info.classList.add('active');
+                } else {
+                    player2Info.classList.add('active');
+                }
+            }
+
+            // Update board
+            updateBoard(matchData.gameState);
+        }
+
+        function updateBoard(gameState) {
+            const boardSize = Math.sqrt(gameState.boardData.length);
             
-            sizeSlider.disabled = true;
-            playerNameInput.disabled = true;
-            matchCodeInput.disabled = true;
-        }
-
-        function updateSpectatorInfo() {
-            if (localState.spectators && localState.spectators.length > 0) {
-                spectatorInfoEl.classList.remove('hidden');
-                spectatorCountEl.textContent = localState.spectators.length;
-            } else {
-                spectatorInfoEl.classList.add('hidden');
+            // Create board if it doesn't exist or size changed
+            if (gameBoard.children.length !== gameState.boardData.length) {
+                createBoard(boardSize);
             }
-        }
 
-        function createBoard() {
-            boardEl.innerHTML = '';
-            boardEl.style.gridTemplateColumns = `repeat(${localState.boardSize}, 1fr)`;
-            boardEl.style.gridTemplateRows = `repeat(${localState.boardSize}, 1fr)`;
-            const boardPixelWidth = Math.min(window.innerWidth, window.innerHeight) * 0.7;
-            boardEl.style.width = `${boardPixelWidth}px`;
-            boardEl.style.height = `${boardPixelWidth}px`;
-            for (let i = 0; i < localState.boardSize * localState.boardSize; i++) {
-                const cell = document.createElement('div');
-                cell.classList.add('cell');
-                cell.dataset.index = i;
-                cell.addEventListener('click', handleCellClick);
-                boardEl.appendChild(cell);
-            }
-        }
-
-        function renderBoard() {
-            Array.from(boardEl.children).forEach((cell, i) => {
+            // Update cells
+            Array.from(gameBoard.children).forEach((cell, i) => {
                 // Clear previous stone
                 while (cell.firstChild) {
                     cell.removeChild(cell.firstChild);
                 }
                 // Add new stone if it exists in state
-                if (localState.boardData[i]) {
+                if (gameState.boardData[i] !== null) {
                     const stone = document.createElement('div');
-                    const playerClass = localState.boardData[i]; // 'black' or 'white'
+                    const playerClass = gameState.boardData[i] === 0 ? 'black' : 'white';
                     stone.classList.add('stone', playerClass);
-                    stone.style.borderRadius = getBorderRadiusForStone(i);
                     cell.appendChild(stone);
                 }
             });
         }
 
-        async function handleCellClick(e) {
-            // Spectators can't make moves
-            if (localState.isSpectating) return;
-            
-            // Check if it's the current player's turn
-            if (localState.isOfflineMode) {
-                // In offline mode, allow any player to play
-            } else {
-                if (localState.currentPlayerId !== auth.currentUser.uid) return; // Not my turn in online mode
-            }
+        function createBoard(size) {
+            gameBoard.innerHTML = '';
+            gameBoard.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            gameBoard.style.gridTemplateRows = `repeat(${size}, 1fr)`;
 
-            const index = parseInt(e.currentTarget.dataset.index);
-            if (localState.boardData[index]) return; // Cell is not empty
-
-            let playerColor;
-            if (localState.isOfflineMode) {
-                playerColor = localState.currentPlayerId === 'player1' ? 'black' : 'white';
-            } else {
-                playerColor = localState.players.indexOf(auth.currentUser.uid) === 0 ? 'black' : 'white';
-            }
-            
-            // Create a temporary board to test the move
-            let tempBoard = [...localState.boardData];
-            tempBoard[index] = playerColor;
-            
-            const opponentColor = playerColor === 'black' ? 'white' : 'black';
-            let capturedStones = 0;
-            
-            // 1. Check for captures of opponent stones
-            getNeighbors(index, localState.boardSize).forEach(n => {
-                if (tempBoard[n] === opponentColor) {
-                    const group = getGroup(n, tempBoard, localState.boardSize);
-                    if (hasNoLiberties(group, tempBoard, localState.boardSize)) {
-                        capturedStones += group.length;
-                        group.forEach(i => tempBoard[i] = null); // Remove captured stones
-                    }
-                }
-            });
-
-            // 2. Check for suicide
-            const ownGroup = getGroup(index, tempBoard, localState.boardSize);
-            if (hasNoLiberties(ownGroup, tempBoard, localState.boardSize)) {
-                statusEl.textContent = "Suicide moves are not allowed.";
-                setTimeout(() => { 
-                    if (localState.isOfflineMode) {
-                        renderOfflineGame();
-                    } else {
-                        renderGame();
-                    }
-                }, 2000);
-                return;
-            }
-
-            // 3. Check for Ko rule (preventing repeating board state)
-            const stateString = tempBoard.join('');
-            if (localState.previousStates.includes(stateString)) {
-                statusEl.textContent = "Move is not allowed due to the Ko rule.";
-                setTimeout(() => { 
-                    if (localState.isOfflineMode) {
-                        renderOfflineGame();
-                    } else {
-                        renderGame();
-                    }
-                }, 2000);
-                return;
-            }
-
-            // Update scores
-            let newP1Score = localState.p1Score;
-            let newP2Score = localState.p2Score;
-            if (playerColor === 'black') newP1Score += capturedStones;
-            else newP2Score += capturedStones;
-
-            // Update local state
-            localState.boardData = tempBoard;
-            localState.p1Score = newP1Score;
-            localState.p2Score = newP2Score;
-            localState.passCount = 0; // Reset pass count on a valid move
-            localState.previousStates = [...localState.previousStates.slice(-10), stateString]; // Keep last 10 states
-
-            if (localState.isOfflineMode) {
-                // Switch players in offline mode
-                localState.currentPlayerId = localState.currentPlayerId === 'player1' ? 'player2' : 'player1';
-                renderOfflineGame();
-            } else {
-                // Update Firestore for online mode
-                const nextPlayerId = localState.players.find(p => p !== auth.currentUser.uid);
-                localState.currentPlayerId = nextPlayerId;
-                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                
-                await updateDoc(gameRef, {
-                    boardData: tempBoard,
-                    currentPlayerId: nextPlayerId,
-                    passCount: 0,
-                    p1Score: newP1Score,
-                    p2Score: newP2Score,
-                    previousStates: localState.previousStates,
-                    lastActivity: serverTimestamp()
-                });
+            for (let i = 0; i < size * size; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.addEventListener('click', () => handleCellClick(i));
+                gameBoard.appendChild(cell);
             }
         }
 
-        async function handlePass() {
-            if (localState.isSpectating) return;
+        async function handleCellClick(cellIndex) {
+            if (!currentGameState || playerRole === 'spectator') return;
+            if (currentGameState.status !== 'playing') return;
             
-            if (localState.isOfflineMode) {
-                // In offline mode, allow pass
+            // Check if it's the player's turn
+            const currentPlayerIndex = currentGameState.gameState.currentPlayer;
+            let myPlayerIndex;
+            
+            if (isOfflineMode) {
+                // In offline mode, allow alternating turns
+                myPlayerIndex = currentPlayerIndex;
             } else {
-                if (localState.currentPlayerId !== auth.currentUser.uid) return; // Not my turn in online mode
+                myPlayerIndex = currentGameState.players.indexOf(auth.currentUser.uid);
+                if (currentPlayerIndex !== myPlayerIndex) return;
             }
             
-            const newPassCount = localState.passCount + 1;
-            localState.passCount = newPassCount;
-            
-            if (newPassCount >= 2) {
-                // Game ends
-                if (localState.isOfflineMode) {
-                    const winner = localState.p1Score > localState.p2Score ? "Player 1 Wins!" : 
-                                  localState.p2Score > localState.p1Score ? "Player 2 Wins!" : "It's a tie!";
-                    statusEl.textContent = `Game Over. ${winner}`;
-                    passBtn.disabled = true;
-                    resignBtn.disabled = true;
-                } else {
-                    // End online game
-                    const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                    const winner = localState.p1Score > localState.p2Score ? localState.players[0] : 
-                                  localState.p2Score > localState.p1Score ? localState.players[1] : null;
-                    await updateDoc(gameRef, {
-                        gameEnded: true,
-                        winner: winner,
-                        endReason: 'pass',
-                        endedAt: serverTimestamp(),
-                        p1Score: localState.p1Score,
-                        p2Score: localState.p2Score
-                    });
+            if (currentGameState.gameState.boardData[cellIndex] !== null) return;
+
+            try {
+                // Make the move
+                const newBoardData = [...currentGameState.gameState.boardData];
+                newBoardData[cellIndex] = myPlayerIndex; // 0 for player1 (black), 1 for player2 (white)
+                
+                // Calculate captures
+                const boardSize = Math.sqrt(newBoardData.length);
+                const captured = calculateCaptures(newBoardData, cellIndex, boardSize);
+                
+                // Remove captured stones
+                captured.forEach(capturedIndex => {
+                    newBoardData[capturedIndex] = null;
+                });
+
+                // Check for suicide (not allowed)
+                if (isSuicideMove(newBoardData, cellIndex, boardSize)) {
+                    alert('Suicide moves are not allowed');
+                    return;
                 }
-            } else {
-                if (localState.isOfflineMode) {
-                    // Switch players in offline mode
-                    localState.currentPlayerId = localState.currentPlayerId === 'player1' ? 'player2' : 'player1';
-                    renderOfflineGame();
+
+                // Update game state
+                const newGameState = {
+                    ...currentGameState.gameState,
+                    boardData: newBoardData,
+                    currentPlayer: 1 - currentPlayerIndex, // Switch players
+                    passCount: 0, // Reset pass count
+                    gameHistory: [...currentGameState.gameState.gameHistory, {
+                        move: cellIndex,
+                        player: myPlayerIndex,
+                        captured: captured
+                    }]
+                };
+
+                if (isOfflineMode) {
+                    // Update local state directly
+                    currentGameState.gameState = newGameState;
+                    updateGameView(currentGameState);
                 } else {
-                    // Update Firestore for online mode
-                    const nextPlayerId = localState.players.find(p => p !== auth.currentUser.uid);
-                    localState.currentPlayerId = nextPlayerId;
-                    const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                    await updateDoc(gameRef, {
-                        currentPlayerId: nextPlayerId,
-                        passCount: newPassCount,
+                    // Update Firestore
+                    const matchRef = doc(db, `artifacts/${appId}/matches`, currentMatchId);
+                    await updateDoc(matchRef, {
+                        gameState: newGameState,
                         lastActivity: serverTimestamp()
                     });
                 }
+
+            } catch (error) {
+                console.error('Error making move:', error);
+                alert('Failed to make move. Please try again.');
             }
+        }
+
+        function calculateCaptures(boardData, moveIndex, boardSize) {
+            const captured = [];
+            const movePlayer = boardData[moveIndex];
+            const opponentPlayer = 1 - movePlayer;
+            
+            // Check all adjacent cells
+            const neighbors = getNeighbors(moveIndex, boardSize);
+            
+            neighbors.forEach(neighborIndex => {
+                if (boardData[neighborIndex] === opponentPlayer) {
+                    // Check if this opponent group has no liberties
+                    const group = getGroup(neighborIndex, boardData, boardSize);
+                    if (hasNoLiberties(group, boardData, boardSize)) {
+                        captured.push(...group);
+                    }
+                }
+            });
+            
+            return captured;
+        }
+
+        function isSuicideMove(boardData, moveIndex, boardSize) {
+            const movePlayer = boardData[moveIndex];
+            const group = getGroup(moveIndex, boardData, boardSize);
+            return hasNoLiberties(group, boardData, boardSize);
+        }
+
+        function getNeighbors(index, boardSize) {
+            const neighbors = [];
+            const x = index % boardSize;
+            const y = Math.floor(index / boardSize);
+            
+            if (x > 0) neighbors.push(index - 1); // Left
+            if (x < boardSize - 1) neighbors.push(index + 1); // Right
+            if (y > 0) neighbors.push(index - boardSize); // Up
+            if (y < boardSize - 1) neighbors.push(index + boardSize); // Down
+            
+            return neighbors;
+        }
+
+        function getGroup(startIndex, boardData, boardSize) {
+            const group = new Set();
+            const stack = [startIndex];
+            const player = boardData[startIndex];
+            
+            while (stack.length > 0) {
+                const index = stack.pop();
+                if (group.has(index)) continue;
+                
+                group.add(index);
+                
+                const neighbors = getNeighbors(index, boardSize);
+                neighbors.forEach(neighborIndex => {
+                    if (boardData[neighborIndex] === player && !group.has(neighborIndex)) {
+                        stack.push(neighborIndex);
+                    }
+                });
+            }
+            
+            return Array.from(group);
+        }
+
+        function hasNoLiberties(group, boardData, boardSize) {
+            for (const index of group) {
+                const neighbors = getNeighbors(index, boardSize);
+                for (const neighborIndex of neighbors) {
+                    if (boardData[neighborIndex] === null) {
+                        return false; // Found a liberty
+                    }
+                }
+            }
+            return true; // No liberties found
+        }
+
+        async function handlePass() {
+            if (!currentGameState || playerRole === 'spectator') return;
+            if (currentGameState.status !== 'playing') return;
+            
+            const currentPlayerIndex = currentGameState.gameState.currentPlayer;
+            
+            if (!isOfflineMode) {
+                const myPlayerIndex = currentGameState.players.indexOf(auth.currentUser.uid);
+                if (currentPlayerIndex !== myPlayerIndex) return;
+            }
+
+            try {
+                const newPassCount = currentGameState.gameState.passCount + 1;
+                
+                if (newPassCount >= 2) {
+                    // Game ends
+                    if (isOfflineMode) {
+                        alert('Game ended by mutual pass.');
+                        returnToLobby();
+                    } else {
+                        const winner = determineWinner(currentGameState.gameState);
+                        await moveToRecentGames(currentGameState, winner, 'pass');
+                        
+                        const matchRef = doc(db, `artifacts/${appId}/matches`, currentMatchId);
+                        await deleteDoc(matchRef);
+                        
+                        alert('Game ended by mutual pass');
+                        returnToLobby();
+                    }
+                } else {
+                    // Continue game with next player
+                    const newGameState = {
+                        ...currentGameState.gameState,
+                        currentPlayer: 1 - currentPlayerIndex,
+                        passCount: newPassCount
+                    };
+
+                    if (isOfflineMode) {
+                        currentGameState.gameState = newGameState;
+                        updateGameView(currentGameState);
+                    } else {
+                        const matchRef = doc(db, `artifacts/${appId}/matches`, currentMatchId);
+                        await updateDoc(matchRef, {
+                            gameState: newGameState,
+                            lastActivity: serverTimestamp()
+                        });
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error passing:', error);
+                alert('Failed to pass. Please try again.');
+            }
+        }
+
+        function determineWinner(gameState) {
+            // Simple scoring: first player wins (can be enhanced later)
+            return currentGameState.players[0];
         }
 
         async function handleResign() {
-            if (localState.isSpectating) return;
+            if (!currentGameState || playerRole === 'spectator') return;
             
-            if (localState.isOfflineMode) {
-                const winner = localState.currentPlayerId === 'player1' ? 'Player 2' : 'Player 1';
-                statusEl.textContent = `${localState.currentPlayerId === 'player1' ? 'Player 1' : 'Player 2'} resigned. ${winner} wins!`;
-                passBtn.disabled = true;
-                resignBtn.disabled = true;
-                setTimeout(resetToLobby, 3000);
-            } else {
-                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                const winner = localState.players.find(p => p !== auth.currentUser.uid);
-                await updateDoc(gameRef, {
-                    gameEnded: true,
-                    winner: winner,
-                    endReason: 'resignation',
-                    endedAt: serverTimestamp()
-                });
+            if (!confirm('Are you sure you want to resign?')) return;
+
+            try {
+                if (isOfflineMode) {
+                    alert('You have resigned');
+                    returnToLobby();
+                } else {
+                    const myPlayerIndex = currentGameState.players.indexOf(auth.currentUser.uid);
+                    const opponentIndex = 1 - myPlayerIndex;
+                    const winner = currentGameState.players[opponentIndex];
+                    
+                    await moveToRecentGames(currentGameState, winner, 'resignation');
+                    
+                    const matchRef = doc(db, `artifacts/${appId}/matches`, currentMatchId);
+                    await deleteDoc(matchRef);
+                    
+                    alert('You have resigned');
+                    returnToLobby();
+                }
+
+            } catch (error) {
+                console.error('Error resigning:', error);
+                alert('Failed to resign. Please try again.');
             }
-        }
-        
-        async function leaveGame() {
-            await handlePlayerLeave();
-            resetToLobby();
         }
 
-        function endGame(message) {
-            statusEl.textContent = message;
-            
-            // Clean up the game document from Firestore after a delay
-            if (currentGameId && !localState.isOfflineMode) {
-                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                setTimeout(async () => {
-                    try {
-                        // First mark as ended if not already
-                        const gameDoc = await getDoc(gameRef);
-                        if (gameDoc.exists() && !gameDoc.data().gameEnded) {
-                            await updateDoc(gameRef, {
-                                gameEnded: true,
-                                endedAt: serverTimestamp()
-                            });
-                        }
-                        // Then delete the document
-                        await deleteDoc(gameRef);
-                    } catch (err) {
-                        console.error("Error cleaning up game doc:", err);
-                    }
-                }, 5000); // Wait 5 seconds before deleting
+        async function leaveCurrentMatch() {
+            if (!currentMatchId) return;
+
+            if (playerRole !== 'spectator' && currentGameState && currentGameState.status === 'playing') {
+                if (!confirm('Leaving will end the match. Are you sure?')) return;
+                
+                if (!isOfflineMode) {
+                    // End the match
+                    const myPlayerIndex = currentGameState.players.indexOf(auth.currentUser.uid);
+                    const opponentIndex = 1 - myPlayerIndex;
+                    const winner = currentGameState.players[opponentIndex];
+                    
+                    await moveToRecentGames(currentGameState, winner, 'abandonment');
+                }
             }
-            
-            setTimeout(() => resetToLobby(), 3000);
+
+            try {
+                if (currentGameState && !isOfflineMode) {
+                    const matchRef = doc(db, `artifacts/${appId}/matches`, currentMatchId);
+                    
+                    if (playerRole === 'spectator') {
+                        // Just leave as spectator
+                    } else {
+                        // Delete the match
+                        await deleteDoc(matchRef);
+                    }
+                }
+            } catch (error) {
+                console.error('Error leaving match:', error);
+            }
+
+            returnToLobby();
         }
-        
+
         function startOfflineGame() {
-            // Reset game state for offline mode
-            localState = {
-                boardSize: parseInt(sizeSlider.value),
-                boardData: Array(parseInt(sizeSlider.value) * parseInt(sizeSlider.value)).fill(null),
-                p1Score: 0,
-                p2Score: 0,
-                currentPlayerId: 'player1',
-                players: ['player1', 'player2'],
-                spectators: [],
-                passCount: 0,
-                previousStates: [],
-                isOfflineMode: true,
-                gameStarted: true,
-                gameEnded: false,
-                isSpectating: false
+            isOfflineMode = true;
+            currentMatchId = 'offline';
+            playerRole = 'player1';
+            
+            const boardSize = parseInt(boardSizeSelect.value);
+            currentGameState = {
+                matchCode: 'OFFLINE',
+                boardSize: boardSize,
+                players: ['offline_player1', 'offline_player2'],
+                playerNames: {
+                    'offline_player1': 'Player 1',
+                    'offline_player2': 'Player 2'
+                },
+                status: 'playing',
+                gameState: {
+                    boardData: Array(boardSize * boardSize).fill(null),
+                    currentPlayer: 0,
+                    passCount: 0,
+                    gameHistory: []
+                }
             };
             
-            createBoard();
-            renderOfflineGame();
+            showGameView();
+            updateGameView(currentGameState);
             
-            // Update UI for offline game
-            matchmakingBtn.textContent = 'End Game';
-            matchmakingBtn.onclick = endOfflineGame;
-            offlineBtn.style.display = 'none';
-            sizeSlider.disabled = true;
-            playerNameInput.disabled = true;
-            matchCodeInput.disabled = true;
-            statusEl.textContent = "Player 1's turn (Black)";
-            boardEl.classList.add('active');
+            // In offline mode, allow both players to play
             passBtn.disabled = false;
             resignBtn.classList.remove('hidden');
             resignBtn.disabled = false;
         }
 
-        function updatePlayerInfo() {
-            // Show player info panel
-            playerInfoEl.classList.remove('hidden');
-            
-            // Get player names
-            let player1Name, player2Name;
-            
-            if (localState.isOfflineMode) {
-                player1Name = 'Player 1';
-                player2Name = 'Player 2';
-            } else {
-                // Use stored player names from game data
-                if (localState.playerNames && localState.players) {
-                    player1Name = localState.playerNames[localState.players[0]] || 'Player 1';
-                    player2Name = localState.playerNames[localState.players[1]] || 'Player 2';
-                } else {
-                    // Fallback to old behavior if playerNames not available
-                    const playerName = playerNameInput.value.trim() || 'You';
-                    const amIPlayer1 = localState.players[0] === auth.currentUser.uid;
-                    player1Name = amIPlayer1 ? playerName : 'Opponent';
-                    player2Name = amIPlayer1 ? 'Opponent' : playerName;
-                }
-            }
-            
-            // Update player names and score labels
-            player1NameEl.textContent = player1Name;
-            player2NameEl.textContent = player2Name;
-            player1ScoreLabelEl.textContent = player1Name;
-            player2ScoreLabelEl.textContent = player2Name;
-            
-            // Update scores
-            p1ScoreEl.textContent = localState.p1Score;
-            p2ScoreEl.textContent = localState.p2Score;
-            
-            // Update turn indicator and highlights
-            const isPlayer1Turn = localState.currentPlayerId === (localState.isOfflineMode ? 'player1' : localState.players[0]);
-            
-            // Remove previous highlights
-            player1InfoEl.classList.remove('player-turn-highlight');
-            player2InfoEl.classList.remove('player-turn-highlight');
-            
-            // Add highlight to current player
-            if (isPlayer1Turn) {
-                player1InfoEl.classList.add('player-turn-highlight');
-                currentTurnIndicatorEl.textContent = `${player1Name}'s turn`;
-            } else {
-                player2InfoEl.classList.add('player-turn-highlight');
-                currentTurnIndicatorEl.textContent = `${player2Name}'s turn`;
+        function handlePageUnload() {
+            if (currentMatchId && !isOfflineMode) {
+                leaveCurrentMatch();
             }
         }
 
-        function renderOfflineGame() {
-            renderBoard();
-            updatePlayerInfo();
-            
-            const currentPlayer = localState.currentPlayerId === 'player1' ? 'Player 1 (Black)' : 'Player 2 (White)';
-            statusEl.textContent = `Game Started - ${currentPlayer}'s turn`;
-            
-            passBtn.disabled = false;
-            resignBtn.disabled = false;
-            playerNameInput.disabled = true;
-            matchCodeInput.disabled = true;
-        }
-
-        function endOfflineGame() {
-            resetToLobby();
-        }
-
-        function resetToLobby() {
-            if (unsubscribeGame) unsubscribeGame();
-            unsubscribeGame = null;
-            currentGameId = null;
-            
-            // Reset offline mode state
-            localState.isOfflineMode = false;
-            localState.gameStarted = false;
-            localState.gameEnded = false;
-            localState.isSpectating = false;
-            
-            boardEl.classList.remove('active');
-            passBtn.disabled = true;
-            resignBtn.classList.add('hidden');
-            resignBtn.disabled = true;
-            matchmakingBtn.textContent = 'Find Match';
-            matchmakingBtn.disabled = false;
-            matchmakingBtn.onclick = findMatch;
-            offlineBtn.style.display = 'inline-block';
-            sizeSlider.disabled = false;
-            playerNameInput.disabled = false;
-            matchCodeInput.disabled = false;
-            statusEl.textContent = "Ready to play.";
-            
-            // Hide player info panel and spectator info
-            playerInfoEl.classList.add('hidden');
-            spectatorInfoEl.classList.add('hidden');
-            
-            // Remove any turn highlights
-            player1InfoEl.classList.remove('player-turn-highlight');
-            player2InfoEl.classList.remove('player-turn-highlight');
-            
-            // Re-initialize board to default size
-            localState.boardSize = parseInt(sizeSlider.value);
-            localState.boardData = Array(localState.boardSize * localState.boardSize).fill(null);
-            localState.p1Score = 0;
-            localState.p2Score = 0;
-            localState.passCount = 0;
-            localState.previousStates = [];
-            localState.spectators = [];
-            createBoard();
-            renderBoard(); // Render the empty board
-            p1ScoreEl.textContent = '0';
-            p2ScoreEl.textContent = '0';
-            
-            // Reset score labels to default
-            player1ScoreLabelEl.textContent = 'Player 1';
-            player2ScoreLabelEl.textContent = 'Player 2';
-        }
-
-        // --- Helper Functions ---
-        function getBorderRadiusForStone(index) {
-            const color = localState.boardData[index];
-            if (!color) return '50%';
-            const { boardSize, boardData } = localState;
-            const x = index % boardSize;
-            const y = Math.floor(index / boardSize);
-            const hasTopNeighbor = y > 0 && boardData[index - boardSize] === color;
-            const hasRightNeighbor = x < boardSize - 1 && boardData[index + 1] === color;
-            const hasBottomNeighbor = y < boardSize - 1 && boardData[index + boardSize] === color;
-            const hasLeftNeighbor = x > 0 && boardData[index - 1] === color;
-            const round = '50%', flat = '20%';
-            const topLeft = (hasTopNeighbor || hasLeftNeighbor) ? flat : round;
-            const topRight = (hasTopNeighbor || hasRightNeighbor) ? flat : round;
-            const bottomRight = (hasBottomNeighbor || hasRightNeighbor) ? flat : round;
-            const bottomLeft = (hasBottomNeighbor || hasLeftNeighbor) ? flat : round;
-            return `${topLeft} ${topRight} ${bottomRight} ${bottomLeft}`;
-        }
-        
-        function getNeighbors(index, boardSize) {
-            const neighbors = [];
-            const x = index % boardSize, y = Math.floor(index / boardSize);
-            if (x > 0) neighbors.push(index - 1);
-            if (x < boardSize - 1) neighbors.push(index + 1);
-            if (y > 0) neighbors.push(index - boardSize);
-            if (y < boardSize - 1) neighbors.push(index + boardSize);
-            return neighbors;
-        }
-        
-        function getGroup(startIndex, boardData, boardSize) {
-            if (boardData[startIndex] === null) return [];
-            const group = new Set([startIndex]), queue = [startIndex], color = boardData[startIndex], visited = new Set([startIndex]);
-            while (queue.length > 0) {
-                const currentIndex = queue.shift();
-                getNeighbors(currentIndex, boardSize).forEach(neighborIndex => {
-                    if (!visited.has(neighborIndex) && boardData[neighborIndex] === color) {
-                        visited.add(neighborIndex);
-                        group.add(neighborIndex);
-                        queue.push(neighborIndex);
-                    }
-                });
-            }
-            return Array.from(group);
-        }
-        
-        function hasNoLiberties(group, boardData, boardSize) {
-            if (group.length === 0) return false;
-            for (const stoneIndex of group) {
-                if (getNeighbors(stoneIndex, boardSize).some(neighborIndex => boardData[neighborIndex] === null)) return false;
-            }
-            return true;
-        }
-
-        // --- Settings Modal ---
-        const settingsBtn = document.getElementById('settings-btn');
-        const settingsModal = document.getElementById('settings-modal');
-        const closeModalBtn = document.getElementById('close-modal');
-        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-        closeModalBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-        window.addEventListener('click', e => { if (e.target == settingsModal) settingsModal.classList.add('hidden'); });
-        const setCssVar = (name, value) => document.documentElement.style.setProperty(name, value);
-        function darkenColor(hex, percent) {
-            hex = hex.replace(/^#/, '');
-            if (hex.length === 3) hex = hex.split('').map(char => char + char).join('');
-            const num = parseInt(hex, 16), amt = Math.round(2.55 * percent);
-            const R = (num >> 16) - amt, G = (num >> 8 & 0x00FF) - amt, B = (num & 0x0000FF) - amt;
-            return `#${(0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1)}`;
-        }
-        document.getElementById('p1-color-picker').addEventListener('input', e => setCssVar('--p1-color', e.target.value));
-        document.getElementById('p1-glow-color-picker').addEventListener('input', e => setCssVar('--p1-glow-color', e.target.value));
-        document.getElementById('p1-glow-size-slider').addEventListener('input', e => setCssVar('--p1-glow-size', e.target.value + 'px'));
-        document.getElementById('p2-color-picker').addEventListener('input', e => setCssVar('--p2-color', e.target.value));
-        document.getElementById('p2-glow-color-picker').addEventListener('input', e => setCssVar('--p2-glow-color', e.target.value));
-        document.getElementById('p2-glow-size-slider').addEventListener('input', e => setCssVar('--p2-glow-size', e.target.value + 'px'));
-        document.getElementById('board-bg-picker').addEventListener('input', e => setCssVar('--board-bg', e.target.value));
-        document.getElementById('cell-bg-picker').addEventListener('input', e => {
-            const newColor = e.target.value;
-            setCssVar('--cell-bg', newColor);
-            setCssVar('--cell-hover-bg', darkenColor(newColor, 10));
-        });
-        
-        // --- Cleanup old games periodically ---
-        async function cleanupOldGames() {
-            if (!db) return;
-            
-            try {
-                const gamesRef = collection(db, `artifacts/${appId}/public/data/games`);
-                const oldGamesQuery = query(gamesRef, where('gameEnded', '==', true));
-                const oldGames = await getDocs(oldGamesQuery);
-                
-                const now = Date.now();
-                for (const doc of oldGames.docs) {
-                    const gameData = doc.data();
-                    // Delete games that ended more than 1 minute ago
-                    if (gameData.endedAt && gameData.endedAt.toMillis) {
-                        const endedTime = gameData.endedAt.toMillis();
-                        if (now - endedTime > 60000) { // 1 minute
-                            await deleteDoc(doc.ref);
-                        }
-                    }
-                }
-                
-                // Also clean up games that have been inactive for more than 10 minutes
-                const allGamesQuery = query(gamesRef);
-                const allGames = await getDocs(allGamesQuery);
-                
-                for (const doc of allGames.docs) {
-                    const gameData = doc.data();
-                    if (gameData.lastActivity && gameData.lastActivity.toMillis) {
-                        const lastActivityTime = gameData.lastActivity.toMillis();
-                        if (now - lastActivityTime > 600000 && !gameData.gameEnded) { // 10 minutes
-                            await updateDoc(doc.ref, {
-                                gameEnded: true,
-                                endReason: 'timeout',
-                                endedAt: serverTimestamp()
-                            });
-                            // Delete after marking as ended
-                            setTimeout(() => deleteDoc(doc.ref), 5000);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error cleaning up old games:', error);
-            }
-        }
-        
-        // Run cleanup every 30 seconds
-        setInterval(cleanupOldGames, 30000);
-        
-        // --- App Initialization ---
-        initializeAppLogic();
+        // Initialize the app
+        initApp();
 
     </script>
 </body>

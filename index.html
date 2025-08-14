@@ -402,17 +402,7 @@
             });
 
             // Handle page visibility changes and beforeunload
-            document.addEventListener('visibilitychange', handleVisibilityChange);
             window.addEventListener('beforeunload', handlePageUnload);
-        }
-
-        function handleVisibilityChange() {
-            if (document.hidden) {
-                // Page is hidden, user might be leaving
-                if (currentGameId && !localState.isOfflineMode) {
-                    handlePlayerLeave();
-                }
-            }
         }
 
         function handlePageUnload() {
@@ -499,7 +489,7 @@
                 const gameDoc = existingGames.docs[0];
                 const gameData = gameDoc.data();
                 
-                if (gameData.players.length < 2) {
+                if (gameData.players.length < 2 && !gameData.players.includes(auth.currentUser.uid)) {
                     // Join as second player
                     const updatedPlayers = [...gameData.players, auth.currentUser.uid];
                     const updatedPlayerNames = {
@@ -514,7 +504,7 @@
                     });
                     
                     joinGame(gameDoc.id, false);
-                } else {
+                } else if (!gameData.players.includes(auth.currentUser.uid) && !(gameData.spectators && gameData.spectators.includes(auth.currentUser.uid))) {
                     // Join as spectator
                     const updatedSpectators = [...(gameData.spectators || []), auth.currentUser.uid];
                     const updatedSpectatorNames = {
@@ -916,7 +906,7 @@
                 statusEl.textContent = `${localState.currentPlayerId === 'player1' ? 'Player 1' : 'Player 2'} resigned. ${winner} wins!`;
                 passBtn.disabled = true;
                 resignBtn.disabled = true;
-                setTimeout(() => resetToLobby(), 3000);
+                setTimeout(resetToLobby, 3000);
             } else {
                 const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
                 const winner = localState.players.find(p => p !== auth.currentUser.uid);
@@ -936,6 +926,15 @@
 
         function endGame(message) {
             statusEl.textContent = message;
+            
+            // Clean up the game document from Firestore after a delay
+            if (currentGameId && !localState.isOfflineMode) {
+                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+                setTimeout(() => {
+                    deleteDoc(gameRef).catch(err => console.error("Error deleting game doc:", err));
+                }, 5000); // Wait 5 seconds before deleting
+            }
+            
             setTimeout(() => resetToLobby(), 3000);
         }
         

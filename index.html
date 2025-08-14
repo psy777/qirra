@@ -424,15 +424,31 @@
                     if (localState.isSpectating) {
                         // Remove from spectators
                         const updatedSpectators = gameData.spectators.filter(id => id !== auth.currentUser.uid);
-                        await updateDoc(gameRef, { spectators: updatedSpectators });
-                    } else if (gameData.players.includes(auth.currentUser.uid)) {
-                        // Player is leaving - end the game
+                        const updatedSpectatorNames = { ...gameData.spectatorNames };
+                        delete updatedSpectatorNames[auth.currentUser.uid];
                         await updateDoc(gameRef, { 
-                            gameEnded: true,
-                            winner: gameData.players.find(p => p !== auth.currentUser.uid),
-                            endReason: 'resignation',
-                            endedAt: serverTimestamp()
+                            spectators: updatedSpectators,
+                            spectatorNames: updatedSpectatorNames 
                         });
+                    } else if (gameData.players.includes(auth.currentUser.uid)) {
+                        // Player is leaving - end the game and clean up
+                        if (!gameData.gameEnded) {
+                            await updateDoc(gameRef, { 
+                                gameEnded: true,
+                                winner: gameData.players.find(p => p !== auth.currentUser.uid),
+                                endReason: 'resignation',
+                                endedAt: serverTimestamp()
+                            });
+                            
+                            // Clean up the game after a short delay
+                            setTimeout(async () => {
+                                try {
+                                    await deleteDoc(gameRef);
+                                } catch (err) {
+                                    console.error("Error deleting game doc:", err);
+                                }
+                            }, 5000);
+                        }
                     }
                 }
             } catch (error) {
@@ -479,8 +495,17 @@
             const desiredBoardSize = localState.boardSize;
             const myPlayerName = playerNameInput.value.trim() || 'Anonymous';
             
-            // First, check if there's an existing active game with this code
+            // First, clean up any ended games with this code
             const gamesRef = collection(db, `artifacts/${appId}/public/data/games`);
+            const endedGamesQuery = query(gamesRef, where('code', '==', code), where('gameEnded', '==', true));
+            const endedGames = await getDocs(endedGamesQuery);
+            
+            // Delete all ended games with this code
+            for (const doc of endedGames.docs) {
+                await deleteDoc(doc.ref);
+            }
+            
+            // Now check if there's an existing active game with this code
             const existingGameQuery = query(gamesRef, where('code', '==', code), where('gameEnded', '==', false));
             const existingGames = await getDocs(existingGameQuery);
             
@@ -517,6 +542,9 @@
                         spectatorNames: updatedSpectatorNames
                     });
                     
+                    joinGame(gameDoc.id, true);
+                } else {
+                    // Game is full or user is already in it, just join as spectator
                     joinGame(gameDoc.id, true);
                 }
                 return;
@@ -557,7 +585,7 @@
                 // Delete opponent from waiting pool
                 await deleteDoc(opponentDoc.ref);
 
-                // Create a new game
+                // Create a new game with unique ID
                 const newGameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
                 const players = Math.random() < 0.5 ? [auth.currentUser.uid, opponentId] : [opponentId, auth.currentUser.uid];
                 
@@ -584,7 +612,8 @@
                     gameId: newGameId,
                     code: gameCode,
                     gameStarted: true,
-                    gameEnded: false
+                    gameEnded: false,
+                    lastActivity: serverTimestamp()
                 };
 
                 await setDoc(doc(db, `artifacts/${appId}/public/data/games`, newGameId), newGameData);
@@ -610,8 +639,13 @@
                     if (gameDoc.id !== currentGameId) {
                         joinGame(gameDoc.id, false);
                     } else {
-                        updateLocalState(gameDoc.data());
-                        renderGame();
+                        const gameData = gameDoc.data();
+                        if (gameData.gameEnded) {
+                            endGame(getEndGameMessage(gameData));
+                        } else {
+                            updateLocalState(gameData);
+                            renderGame();
+                        }
                     }
                 }
             });
@@ -627,6 +661,8 @@
 
         function joinGame(gameId, isSpectating = false) {
             if (unsubscribeWaiting) unsubscribeWaiting();
+            if (currentGameId === gameId) return; // Already in this game
+
             currentGameId = gameId;
             localState.isSpectating = isSpectating;
             
@@ -846,7 +882,8 @@
                     passCount: 0,
                     p1Score: newP1Score,
                     p2Score: newP2Score,
-                    previousStates: localState.previousStates
+                    previousStates: localState.previousStates,
+                    lastActivity: serverTimestamp()
                 });
             }
         }
@@ -874,10 +911,15 @@
                 } else {
                     // End online game
                     const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+                    const winner = localState.p1Score > localState.p2Score ? localState.players[0] : 
+                                  localState.p2Score > localState.p1Score ? localState.players[1] : null;
                     await updateDoc(gameRef, {
                         gameEnded: true,
+                        winner: winner,
                         endReason: 'pass',
-                        endedAt: serverTimestamp()
+                        endedAt: serverTimestamp(),
+                        p1Score: localState.p1Score,
+                        p2Score: localState.p2Score
                     });
                 }
             } else {
@@ -892,7 +934,8 @@
                     const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
                     await updateDoc(gameRef, {
                         currentPlayerId: nextPlayerId,
-                        passCount: newPassCount
+                        passCount: newPassCount,
+                        lastActivity: serverTimestamp()
                     });
                 }
             }
@@ -930,8 +973,21 @@
             // Clean up the game document from Firestore after a delay
             if (currentGameId && !localState.isOfflineMode) {
                 const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                setTimeout(() => {
-                    deleteDoc(gameRef).catch(err => console.error("Error deleting game doc:", err));
+                setTimeout(async () => {
+                    try {
+                        // First mark as ended if not already
+                        const gameDoc = await getDoc(gameRef);
+                        if (gameDoc.exists() && !gameDoc.data().gameEnded) {
+                            await updateDoc(gameRef, {
+                                gameEnded: true,
+                                endedAt: serverTimestamp()
+                            });
+                        }
+                        // Then delete the document
+                        await deleteDoc(gameRef);
+                    } catch (err) {
+                        console.error("Error cleaning up game doc:", err);
+                    }
                 }, 5000); // Wait 5 seconds before deleting
             }
             
@@ -1171,6 +1227,54 @@
             setCssVar('--cell-bg', newColor);
             setCssVar('--cell-hover-bg', darkenColor(newColor, 10));
         });
+        
+        // --- Cleanup old games periodically ---
+        async function cleanupOldGames() {
+            if (!db) return;
+            
+            try {
+                const gamesRef = collection(db, `artifacts/${appId}/public/data/games`);
+                const oldGamesQuery = query(gamesRef, where('gameEnded', '==', true));
+                const oldGames = await getDocs(oldGamesQuery);
+                
+                const now = Date.now();
+                for (const doc of oldGames.docs) {
+                    const gameData = doc.data();
+                    // Delete games that ended more than 1 minute ago
+                    if (gameData.endedAt && gameData.endedAt.toMillis) {
+                        const endedTime = gameData.endedAt.toMillis();
+                        if (now - endedTime > 60000) { // 1 minute
+                            await deleteDoc(doc.ref);
+                        }
+                    }
+                }
+                
+                // Also clean up games that have been inactive for more than 10 minutes
+                const allGamesQuery = query(gamesRef);
+                const allGames = await getDocs(allGamesQuery);
+                
+                for (const doc of allGames.docs) {
+                    const gameData = doc.data();
+                    if (gameData.lastActivity && gameData.lastActivity.toMillis) {
+                        const lastActivityTime = gameData.lastActivity.toMillis();
+                        if (now - lastActivityTime > 600000 && !gameData.gameEnded) { // 10 minutes
+                            await updateDoc(doc.ref, {
+                                gameEnded: true,
+                                endReason: 'timeout',
+                                endedAt: serverTimestamp()
+                            });
+                            // Delete after marking as ended
+                            setTimeout(() => deleteDoc(doc.ref), 5000);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error cleaning up old games:', error);
+            }
+        }
+        
+        // Run cleanup every 30 seconds
+        setInterval(cleanupOldGames, 30000);
         
         // --- App Initialization ---
         initializeAppLogic();

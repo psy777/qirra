@@ -170,23 +170,11 @@
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
-    <h1 id="game-title" class="text-5xl font-bold mb-4">Qirra</h1>
-    <div class="controls-container mb-4">
-        <div class="slider-control">
-            <label for="size-slider" class="mr-4">Size:</label>
-            <input type="range" id="size-slider" min="5" max="25" value="8">
-            <span id="size-label" class="ml-4 w-16 text-center">8x8</span>
-        </div>
-        <input id="player-name" type="text" placeholder="Enter your name" class="mt-2 p-2 rounded bg-[var(--cell-bg)] text-center" maxlength="20" />
-        <input id="match-code" type="text" placeholder="Match code (optional)" class="mt-2 p-2 rounded bg-[var(--cell-bg)] text-center" />
-    </div>
-    <div id="online-count-container">Players Online: <span id="online-count">0</span></div>
-    <div id="spectator-info" class="hidden">Spectators: <span id="spectator-count">0</span></div>
-    
+    <h1 id="game-title" class="text-5xl font-medium mb-4">Qirra</h1>
     <!-- Available Matches Table -->
     <div id="matches-container" class="mb-4 w-full max-w-4xl">
-        <h3 class="text-2xl mb-2 text-center">Available Matches</h3>
         <div class="bg-[var(--cell-bg)] rounded-lg p-4 max-h-64 overflow-y-auto">
+            <h3 class="text-2xl mb-2 text-center">Available Matches</h3>
             <table class="w-full text-left">
                 <thead>
                     <tr class="border-b border-gray-600">
@@ -239,6 +227,11 @@
         <div class="modal-content">
             <span id="close-modal" class="close-btn">&times;</span>
             <h2 class="text-3xl mb-4" style="font-family: 'Cinzel', serif;">Settings</h2>
+            <div class="slider-control">
+            <label for="size-slider" class="mr-4">Size:</label>
+            <input type="range" id="size-slider" min="5" max="25" value="8">
+            <span id="size-label" class="ml-4 w-16 text-center">8x8</span>
+            </div>
             <div class="settings-grid">
                 <h3>Player 1</h3>
                 <label for="p1-color-picker">Tile Color</label> <input type="color" id="p1-color-picker" value="#000000">
